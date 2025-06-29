@@ -18,7 +18,7 @@
 
 # Product Backlog URL
 
-[AI Takım 83 Trello Backlog Board](https://trello.com/invite/b/68615b8928c9220af1543103/ATTI6e503e6bd0a48f3c3fee3d2f5ec5e2d836BAEFA4/radyolojik-gorseller-uzerinden-otomatik-tani-ve-raporlama-sistemi)
+[AI Takım 83 Trello Backlog Board](https://trello.com/b/zEVe7Gs3/radyolojik-gorseller-uzerinden-otomatik-tani-ve-raporlama-sistemi)
 
 
 ---
