@@ -102,13 +102,13 @@ Her gün ekip üyeleri tarafından:
 belirli bir formatla gruba aktarılmıştır.
 
 🗂 **Günlük konuşma kayıtları:**  
-📄 [daily.pdf](attachment:5fdb5199-2736-411e-b3ab-0e095f514ed2:daily.pdf)
+📄 [daily.pdf]((https://github.com/EsraCesur4/YZTA-Bootcamp-AI-83/blob/main/daily.pdf))
 
 ---
 
 ##  Sprint Board
 
-![Sprint Board](attachment:34d23363-8293-4693-adac-be58854f67e0:image.png)
+![Sprint Board]((https://github.com/EsraCesur4/YZTA-Bootcamp-AI-83/blob/main/trello1.png))
 
 ---
 
