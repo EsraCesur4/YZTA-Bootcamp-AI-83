@@ -13,13 +13,6 @@
 | Emir Can İpsalalı       | Developer        | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)](https://github.com/emiripsalali) |
 
 
----
-
-
-# Product Backlog URL
-
-[AI Takım 83 Trello Backlog Board](https://trello.com/b/zEVe7Gs3/radyolojik-gorseller-uzerinden-otomatik-tani-ve-raporlama-sistemi)
-
 
 ---
 
@@ -60,11 +53,19 @@ Modelin tespit ettiği bulgular otomatik olarak raporlanacak ve manuel raporlama
 
 ---
 
-# Neden Bu Platforma İhtiyaç Var?
+## Neden Bu Platforma İhtiyaç Var?
 
 - Artan İş Yükü ve Zaman Kısıtlılığı
 - İnsan Hatası Riski
 - Standardizasyon Eksikliği
+
+---
+
+
+# Product Backlog URL
+
+[AI Takım 83 Trello Backlog Board](https://trello.com/b/zEVe7Gs3/radyolojik-gorseller-uzerinden-otomatik-tani-ve-raporlama-sistemi)
+
 
 ---
 
@@ -112,13 +113,27 @@ belirli bir formatla gruba aktarılmıştır.
 
 ---
 
+## Ürün Durumu (Ekran Görüntüleri)
+
+![RadiologyWorkbench_Web_Arayüzü_1](https://github.com/user-attachments/assets/f7a2cd72-cbe2-4072-b9cc-6ef964cadde9)
+
+
+![RadiologyWorkbench_Web_Arayüzü_2](https://github.com/user-attachments/assets/3e39d3ff-a82f-4600-b610-9cd98fa6b021)
+
+
+![Binary_Classification_densenet](https://github.com/user-attachments/assets/b13ead65-89b2-44f6-be66-39e6acbbc20f)
+
+---
+
 ##  Sprint Review
 
-- Göğüs X-ray verileri başarıyla toplanmış ve analiz edilmiştir.  
-- Hastalıklı olarak etiketlenmiş veriler üzerinde çok sınıflı (multi-class) sınıflandırma modeli eğitildi.  
+- Göğüs X-ray verileri başarıyla toplanmış ve analiz edilmiştir.
+- Veriler üzerinde, hastalıklı ve sağlıklı etiketlerine göre bir ikili (binary) sınıflandırma modeli geliştirilmiştir.
+- Hastalıklı olarak etiketlenmiş veriler üzerinde çok sınıflı (multi-class) sınıflandırma modeli bulunmuştur.  
 - Görselleştirme ve anomali işaretleme bir sonraki sprint'e ertelendi.  
 - Raporlama için Gemini entegrasyonu planlandı fakat henüz başlatılmadı. Prompt yapıları Sprint 2’ye aktarılmıştır.  
 - Sistem, ileride farklı vücut bölgelerini analiz edebilecek şekilde genişletilebilir.
+- Web sitesine yönelik genel bir kullanıcı arayüzü tasarımı gerçekleştirildi.
 
  **Sprint Review Katılımcıları:**
 - Esra Cesur  
@@ -132,6 +147,8 @@ belirli bir formatla gruba aktarılmıştır.
 
 - Toplantı zamanları belirlendi.  
 - Takım içi görev dağılımları yapıldı.
+
+
 
 
 
