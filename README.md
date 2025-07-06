@@ -68,8 +68,70 @@ Modelin tespit ettiği bulgular otomatik olarak raporlanacak ve manuel raporlama
 
 ---
 
-# Sprint 1
 
+#  Sprint 1
+
+## Sprint Notları
+Sprint süresince yapılması planlanan görevler backlog içerisine tanımlanmıştır.  
+Projenin temel yapısı oluşturulmuştur.
+
+---
+
+##  Sprint Puanları
+
+- **Toplam Backlog Puanı:** 340 puan  
+- **Sprint 1 Hedefi:** 100 puan
+
+**Sprint 1 içeriği:**
+- Altyapı kurulumu  
+- Veri toplama  
+- İlk model eğitimi  
+- İlk arayüz tasarımı
+
+---
+
+## 🗣 Daily Scrum
+
+Günlük scrum toplantılarımız **WhatsApp grubu üzerinden yazılı olarak** gerçekleştirilmiştir.  
+Her gün ekip üyeleri tarafından:
+
+-  Bir önceki gün yapılan işler  
+-  O gün planlanan görevler  
+-  Karşılaşılan engeller veya ihtiyaç duyulan destekler  
+
+belirli bir formatla gruba aktarılmıştır.
+
+🗂 **Günlük konuşma kayıtları:**  
+📄 [daily.pdf](attachment:5fdb5199-2736-411e-b3ab-0e095f514ed2:daily.pdf)
+
+---
+
+##  Sprint Board
+
+![Sprint Board](attachment:34d23363-8293-4693-adac-be58854f67e0:image.png)
+
+---
+
+##  Sprint Review
+
+- Göğüs X-ray verileri başarıyla toplanmış ve analiz edilmiştir.  
+- Hastalıklı olarak etiketlenmiş veriler üzerinde çok sınıflı (multi-class) sınıflandırma modeli eğitildi.  
+- Görselleştirme ve anomali işaretleme bir sonraki sprint'e ertelendi.  
+- Raporlama için Gemini entegrasyonu planlandı fakat henüz başlatılmadı. Prompt yapıları Sprint 2’ye aktarılmıştır.  
+- Sistem, ileride farklı vücut bölgelerini analiz edebilecek şekilde genişletilebilir.
+
+ **Sprint Review Katılımcıları:**
+- Esra Cesur  
+- İclal Karahisar  
+- Atakan Emir Çaldağ  
+- Emir Can İpsalalı
+
+---
+
+## Sprint Retrospective
+
+- Toplantı zamanları belirlendi.  
+- Takım içi görev dağılımları yapıldı.
 
 
 
