@@ -103,13 +103,13 @@ Her gün ekip üyeleri tarafından:
 belirli bir formatla gruba aktarılmıştır.
 
 🗂 **Günlük konuşma kayıtları:**  
-📄 [daily.pdf](daily.pdf)
+📄 [daily.pdf](Documentation/daily.pdf)
 
 ---
 
 ##  Sprint Board
 
-![Sprint Board](trello1.png)
+![Sprint Board](Documentation/trello1.png)
 
 ---
 
