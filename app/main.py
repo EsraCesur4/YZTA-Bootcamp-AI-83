@@ -1,12 +1,15 @@
-from fastapi import FastAPI
-from app.models import Base, engine
-from app.auth import router as auth_router
-
-Base.metadata.create_all(bind=engine)
+from fastapi import FastAPI, Depends
+from app.auth import router as auth_router, get_current_user
+from app.schemas import UserOut
 
 app = FastAPI()
-app.include_router(auth_router, prefix="/auth")
+
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
 
 @app.get("/")
 def root():
-    return {"status": "backend is working"}
+    return {"message": "Welcome to your API"}
+
+@app.get("/me", response_model=UserOut)
+async def read_current_user(current_user=Depends(get_current_user)):
+    return current_user
