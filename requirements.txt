@@ -6,3 +6,4 @@ passlib[bcrypt]
 python-jose
 python-multipart
 Pillow
+psycopg2-binary

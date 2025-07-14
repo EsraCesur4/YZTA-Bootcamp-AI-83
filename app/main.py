@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends
 from app.auth import router as auth_router, get_current_user
 from app.schemas import UserOut
 
-app = FastAPI()
+app = FastAPI(title="User Authentication API", version="1.0.0")
 
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 
