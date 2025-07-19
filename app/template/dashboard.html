@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radiology Assistance - Professional Workbench</title>
+    <title>Two-Stage Radiology AI - Professional Workbench</title>
     <style>
         * {
             margin: 0;
@@ -41,6 +41,18 @@
             color: #888;
             margin-top: 5px;
         }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-online { background-color: #22c55e; }
+        .status-offline { background-color: #ef4444; }
+        .status-loading { background-color: #f59e0b; animation: pulse 2s infinite; }
 
         .main-container {
             display: grid;
@@ -96,6 +108,11 @@
         .upload-area.has-image {
             border-color: rgba(0, 212, 255, 0.6);
             background: rgba(0, 0, 0, 0.4);
+        }
+
+        .upload-area.analyzing {
+            border-color: rgba(245, 158, 11, 0.6);
+            background: rgba(245, 158, 11, 0.05);
         }
 
         .upload-icon {
@@ -166,6 +183,12 @@
             color: #ef4444;
         }
 
+        .findings-status.analyzing {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #f59e0b;
+        }
+
         .probability-bars {
             margin-bottom: 30px;
         }
@@ -232,9 +255,17 @@
             box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
         }
 
+        .download-btn:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: #888;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         .report-textarea {
             width: 100%;
-            min-height: 400px;
+            min-height: 200px;
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 4px;
@@ -288,6 +319,15 @@
             line-height: 1.6;
         }
 
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
         .hidden {
             display: none;
         }
@@ -323,11 +363,37 @@
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #00d4ff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .prediction-confidence {
+            font-size: 12px;
+            color: #888;
+            margin-top: 10px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Radiology Assistance</h1>
+        <h1>Radiology Assistance - Two-Stage AI</h1>
+        <div class="subtitle">
+            <span class="status-indicator status-offline" id="apiStatus"></span>
+            <span id="apiStatusText">Connecting to Two-Stage AI Server...</span>
+        </div>
     </div>
 
     <div class="main-container">
@@ -351,41 +417,34 @@
 
             <div class="report-section">
                 <h3>Download Report</h3>
-                <button class="download-btn" onclick="downloadReport()">📄 Generate & Download PDF Report</button>
+                <button class="download-btn" id="downloadBtn" onclick="downloadReport()" disabled>📄 Generate & Download PDF Report</button>
             </div>
 
             <div class="report-section">
                 <h3>Edit Report</h3>
-                <textarea class="report-textarea" id="reportText" placeholder="Enter additional notes and observations...">
+                <textarea class="report-textarea" id="reportText" placeholder="Analysis results will appear here after image upload...">
 CHEST X-RAY ANALYSIS REPORT
 
-Date: 2025-07-05
+Date: ${new Date().toLocaleDateString()}
 Patient ID: [Patient ID]
 Study: Chest X-Ray PA/Lateral
 
 AI MODEL ANALYSIS:
-Automated analysis completed using deep learning model trained on 14 pathological conditions:
-- Cardiomegaly, Hernia, Infiltration, Nodule, Emphysema
-- Effusion, Atelectasis, Pleural Thickening, Pneumothorax
-- Mass, Fibrosis, Consolidation, Edema, Pneumonia
+Automated analysis using deep learning model trained on 14 pathological conditions:
+- Atelectasis, Cardiomegaly, Consolidation, Edema, Effusion
+- Emphysema, Fibrosis, Infiltration, Mass, Nodule
+- Pleural Thickening, Pneumonia, Pneumothorax, No Finding
 
 FINDINGS:
-No acute cardiopulmonary abnormalities detected by AI analysis.
-Heart size and mediastinal contours appear normal.
-Lungs are clear bilaterally without evidence of consolidation, pleural effusion, or pneumothorax.
-No masses, nodules, or infiltrates identified.
-Osseous structures appear intact.
+Upload an image to generate AI analysis...
 
 PROBABILITY ANALYSIS:
-All pathological conditions show low probability scores (<5%)
-Highest probability: [Disease] at [X]%
-Confidence threshold maintained above 70% for all classifications
+Awaiting image upload for probability calculations.
 
 IMPRESSION:
-Normal chest X-ray examination based on AI-assisted analysis.
-Clinical correlation recommended for final diagnosis.
+No analysis performed yet.
 
-AI Analysis Confidence: High (>95%)
+AI Analysis Confidence: Pending
 Reviewed by: AI-Assisted Diagnostic System
 Requires: Radiologist verification and clinical correlation
                 </textarea>
@@ -395,139 +454,21 @@ Requires: Radiologist verification and clinical correlation
         <div class="right-panel">
             <div class="section-title">Analysis Results</div>
             
-            <div class="findings-status no-findings" id="findingsStatus">
-                No Findings Detected
+            <div class="findings-status analyzing" id="findingsStatus">
+                Upload Image to Begin Analysis
             </div>
 
             <div class="probability-bars" id="probabilityBars">
-                <div class="probability-item">
-                    <div class="probability-label">
-                        <span>Cardiomegaly</span>
-                        <span class="low-risk">2.1%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: 2.1%"></div>
-                    </div>
-                </div>
-                <div class="probability-item">
-                    <div class="probability-label">
-                        <span>Hernia</span>
-                        <span class="low-risk">0.8%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: 0.8%"></div>
-                    </div>
-                </div>
-                <div class="probability-item">
-                    <div class="probability-label">
-                        <span>Infiltration</span>
-                        <span class="low-risk">1.3%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: 1.3%"></div>
-                    </div>
-                </div>
-                <div class="probability-item">
-                    <div class="probability-label">
-                        <span>Nodule</span>
-                        <span class="low-risk">3.2%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: 3.2%"></div>
-                    </div>
-                </div>
-                <div class="probability-item">
-                    <div class="probability-label">
-                        <span>Emphysema</span>
-                        <span class="low-risk">1.7%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: 1.7%"></div>
-                    </div>
-                </div>
-                <div class="probability-item">
-                    <div class="probability-label">
-                        <span>Effusion</span>
-                        <span class="low-risk">2.8%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: 2.8%"></div>
-                    </div>
-                </div>
-                <div class="probability-item">
-                    <div class="probability-label">
-                        <span>Atelectasis</span>
-                        <span class="low-risk">4.1%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: 4.1%"></div>
-                    </div>
-                </div>
-                <div class="probability-item">
-                    <div class="probability-label">
-                        <span>Pleural Thickening</span>
-                        <span class="low-risk">1.9%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: 1.9%"></div>
-                    </div>
-                </div>
-                <div class="probability-item">
-                    <div class="probability-label">
-                        <span>Pneumothorax</span>
-                        <span class="low-risk">0.6%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: 0.6%"></div>
-                    </div>
-                </div>
-                <div class="probability-item">
-                    <div class="probability-label">
-                        <span>Mass</span>
-                        <span class="low-risk">2.4%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: 2.4%"></div>
-                    </div>
-                </div>
-                <div class="probability-item">
-                    <div class="probability-label">
-                        <span>Fibrosis</span>
-                        <span class="low-risk">1.5%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: 1.5%"></div>
-                    </div>
-                </div>
-                <div class="probability-item">
-                    <div class="probability-label">
-                        <span>Consolidation</span>
-                        <span class="low-risk">3.7%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: 3.7%"></div>
-                    </div>
-                </div>
-                <div class="probability-item">
-                    <div class="probability-label">
-                        <span>Edema</span>
-                        <span class="low-risk">2.2%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: 2.2%"></div>
-                    </div>
-                </div>
-                <div class="probability-item">
-                    <div class="probability-label">
-                        <span>Pneumonia</span>
-                        <span class="low-risk">1.8%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: 1.8%"></div>
-                    </div>
-                </div>
-                            </div>
+                <p style="text-align: center; color: #888; padding: 40px;">
+                    Please upload a chest X-ray image to see analysis results.<br>
+                    <small><strong>Two-Stage AI System:</strong><br>
+                    Stage 1: Binary "No Finding" vs "Pathological" classifier<br>
+                    Stage 2: Multi-label pathological condition analysis (if needed)<br>
+                    Pathological conditions: Atelectasis, Cardiomegaly, Consolidation, Edema, Effusion, Emphysema, Fibrosis, Infiltration, Mass, Nodule, Pleural Thickening, Pneumonia, Pneumothorax</small>
+                </p>
             </div>
+
+            <div class="prediction-confidence" id="predictionConfidence"></div>
         </div>
     </div>
 
@@ -535,13 +476,52 @@ Requires: Radiologist verification and clinical correlation
         <div class="section-title">AI Assistant</div>
         <input type="text" class="ai-input" id="aiInput" placeholder="Ask about the X-ray findings, request differential diagnosis, or get clinical recommendations...">
         <div class="ai-response" id="aiResponse">
-            <p style="color: #888; font-style: italic;">AI Assistant ready. Upload an X-ray image and ask questions about the findings, request differential diagnosis, or get clinical recommendations.</p>
+            <p style="color: #888; font-style: italic;">AI Assistant ready. Upload an X-ray image and ask questions about the findings, request differential diagnosis, or get clinical recommendations. The system uses a two-stage approach: first determining if findings are present, then identifying specific pathological conditions if needed.</p>
         </div>
     </div>
 
     <script>
         let currentImage = null;
         let currentFilter = 'original';
+        let lastPredictionResult = null;
+        let apiBaseUrl = 'http://localhost:5000'; // Update this if your API is hosted elsewhere
+
+        // API status tracking
+        async function checkApiStatus() {
+            try {
+                console.log(`Checking API status at: ${apiBaseUrl}/health`);
+                const response = await fetch(`${apiBaseUrl}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    mode: 'cors'  // Explicitly enable CORS
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('API status:', data);
+                
+                const statusIndicator = document.getElementById('apiStatus');
+                const statusText = document.getElementById('apiStatusText');
+                
+                if (data.status === 'healthy' && data.model_loaded) {
+                    statusIndicator.className = 'status-indicator status-online';
+                    statusText.textContent = `AI Server Online (${data.device})`;
+                } else {
+                    statusIndicator.className = 'status-indicator status-offline';
+                    statusText.textContent = 'AI Server: Model Not Loaded';
+                }
+            } catch (error) {
+                const statusIndicator = document.getElementById('apiStatus');
+                const statusText = document.getElementById('apiStatusText');
+                statusIndicator.className = 'status-indicator status-offline';
+                statusText.textContent = 'AI Server Offline';
+            }
+        }
 
         // Upload functionality
         document.getElementById('uploadArea').addEventListener('click', function() {
@@ -555,7 +535,7 @@ Requires: Radiologist verification and clinical correlation
                 reader.onload = function(e) {
                     currentImage = e.target.result;
                     displayImage();
-                    simulateAnalysis();
+                    analyzeImage(file);
                 };
                 reader.readAsDataURL(file);
             }
@@ -603,55 +583,235 @@ Requires: Radiologist verification and clinical correlation
             img.style.filter = filterStyle;
         }
 
-        // Simulate analysis
-        function simulateAnalysis() {
-            // Simulate random findings
-            const hasFindings = Math.random() > 0.7;
+        // Analyze image using the API
+        async function analyzeImage(file) {
             const findingsStatus = document.getElementById('findingsStatus');
+            const uploadArea = document.getElementById('uploadArea');
+            const probabilityBars = document.getElementById('probabilityBars');
             
-            if (hasFindings) {
-                findingsStatus.textContent = 'Findings Detected - Review Required';
-                findingsStatus.className = 'findings-status findings-detected';
-                generateRandomFindings();
-            } else {
-                findingsStatus.textContent = 'No Findings Detected';
-                findingsStatus.className = 'findings-status no-findings';
+            // Show analyzing state
+            findingsStatus.textContent = 'Analyzing Image...';
+            findingsStatus.className = 'findings-status analyzing';
+            uploadArea.classList.add('analyzing');
+            
+            probabilityBars.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <div class="loading-spinner"></div>
+                    AI analysis in progress...
+                </div>
+            `;
+
+            try {
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('image', file);
+
+                console.log(`Sending request to: ${apiBaseUrl}/predict`);
+                console.log(`File size: ${file.size} bytes`);
+
+                // Call API with explicit CORS headers
+                const response = await fetch(`${apiBaseUrl}/predict`, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'cors'  // Explicitly enable CORS
+                });
+
+                console.log(`Response status: ${response.status}`);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const result = await response.json();
+                console.log('Prediction result:', result);
+                
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                // Store result for report generation
+                lastPredictionResult = result;
+                
+                // Update UI with results
+                displayPredictionResults(result);
+                updateReport(result);
+                
+                // Enable download button
+                document.getElementById('downloadBtn').disabled = false;
+                
+            } catch (error) {
+                console.error('Analysis error:', error);
+                showError(error.message);
+            } finally {
+                uploadArea.classList.remove('analyzing');
             }
         }
 
-        function generateRandomFindings() {
-            const diseases = [
-                'Cardiomegaly', 'Hernia', 'Infiltration', 'Nodule', 'Emphysema',
-                'Effusion', 'Atelectasis', 'Pleural Thickening', 'Pneumothorax',
-                'Mass', 'Fibrosis', 'Consolidation', 'Edema', 'Pneumonia'
-            ];
-
-            const probabilities = diseases.map(disease => ({
-                name: disease,
-                value: Math.random() * 40 + 1 // Random probability between 1-41%
-            }));
-
-            const barsContainer = document.getElementById('probabilityBars');
-            barsContainer.innerHTML = '';
-
-            probabilities.forEach(prob => {
-                const riskClass = prob.value > 25 ? 'high-risk' : prob.value > 10 ? 'medium-risk' : 'low-risk';
-                const item = document.createElement('div');
-                item.className = 'probability-item';
-                item.innerHTML = `
-                    <div class="probability-label">
-                        <span>${prob.name}</span>
-                        <span class="${riskClass}">${prob.value.toFixed(1)}%</span>
-                    </div>
-                    <div class="probability-bar">
-                        <div class="probability-fill" style="width: ${Math.min(prob.value, 100)}%"></div>
-                    </div>
+        function displayPredictionResults(result) {
+            const findingsStatus = document.getElementById('findingsStatus');
+            const probabilityBars = document.getElementById('probabilityBars');
+            const predictionConfidence = document.getElementById('predictionConfidence');
+            
+            console.log('Display results:', result); // Debug log
+            
+            // TWO-STAGE SYSTEM: Handle results from binary + multi-label models
+            if (result.no_finding_predicted) {
+                // STAGE 1 RESULT: "No Finding" predicted by binary classifier
+                findingsStatus.textContent = 'No Finding';
+                findingsStatus.className = 'findings-status no-findings';
+                
+                // HIDE probability bars - show "No Finding" message
+                probabilityBars.innerHTML = `
+                    <p style="text-align: center; color: #888; padding: 40px;">
+                        No pathological findings detected.<br>
+                        <small>Binary classifier confidence: ${(result.no_finding_probability * 100).toFixed(1)}%</small><br>
+                        <small>Stage: ${result.stage_used === 'binary_only' ? 'Binary Classification Only' : 'Two-Stage Analysis'}</small>
+                    </p>
                 `;
-                barsContainer.appendChild(item);
-            });
+            } else if (result.has_findings && result.probabilities && result.probabilities.length > 0) {
+                // STAGE 2 RESULT: Pathological findings detected by multi-label classifier
+                findingsStatus.textContent = 'Findings Detected';
+                findingsStatus.className = 'findings-status findings-detected';
+                
+                // SHOW probability bars for pathological conditions
+                probabilityBars.innerHTML = '';
+                
+                // Display all pathological results (already filtered - no "No Finding" in Stage 2)
+                result.probabilities.forEach(prob => {
+                    const item = document.createElement('div');
+                    item.className = 'probability-item';
+                    item.innerHTML = `
+                        <div class="probability-label">
+                            <span>${prob.name}${prob.predicted ? ' ✓' : ''}</span>
+                            <span class="${prob.risk_level}">${prob.percentage.toFixed(1)}%</span>
+                        </div>
+                        <div class="probability-bar">
+                            <div class="probability-fill" style="width: ${Math.min(prob.percentage, 100)}%"></div>
+                        </div>
+                    `;
+                    probabilityBars.appendChild(item);
+                });
+                
+                // Add stage info at bottom
+                const stageInfo = document.createElement('div');
+                stageInfo.innerHTML = `
+                    <p style="text-align: center; color: #666; font-size: 12px; margin-top: 15px;">
+                        Two-Stage Analysis: Binary → Multi-label Classification<br>
+                        No Finding probability: ${(result.no_finding_probability * 100).toFixed(1)}%
+                    </p>
+                `;
+                probabilityBars.appendChild(stageInfo);
+                
+            } else {
+                // EDGE CASE: No findings but unclear result
+                findingsStatus.textContent = 'Analysis Complete - Review Needed';
+                findingsStatus.className = 'findings-status analyzing';
+                
+                probabilityBars.innerHTML = `
+                    <p style="text-align: center; color: #888; padding: 40px;">
+                        Analysis complete but results unclear.<br>
+                        <small>No Finding: ${(result.no_finding_probability * 100).toFixed(1)}%</small><br>
+                        <small>Manual verification recommended.</small>
+                    </p>
+                `;
+            }
+
+            // Update confidence indicator
+            const confidenceText = `Model Confidence: ${result.model_confidence}`;
+            const stageText = result.stage_used === 'binary_only' ? ' (Binary Only)' : ' (Two-Stage)';
+            predictionConfidence.textContent = confidenceText + stageText;
         }
 
-        // AI Assistant
+        function updateReport(result) {
+            const reportText = document.getElementById('reportText');
+            const currentDate = new Date().toLocaleDateString();
+            
+            let findingsText = '';
+            let impressionText = '';
+            let analysisMethod = '';
+            
+            if (result.stage_used === 'binary_only') {
+                // Binary classifier only - "No Finding"
+                analysisMethod = `Two-Stage AI Analysis (Binary Classification Only):
+Stage 1: Binary "No Finding" classifier predicted normal examination
+Stage 2: Multi-label analysis skipped (not required)`;
+                
+                findingsText = `PRIMARY FINDING:\nNo Finding - Normal chest X-ray examination\n\n`;
+                findingsText += `BINARY CLASSIFIER RESULTS:\n`;
+                findingsText += `- No Finding probability: ${(result.no_finding_probability * 100).toFixed(1)}%\n`;
+                findingsText += `- Threshold: 50.0% (exceeded)\n`;
+                findingsText += `- Classification: Normal examination\n\n`;
+                
+                impressionText = `Normal chest X-ray examination based on binary AI classifier. No pathological analysis required.`;
+                
+            } else if (result.stage_used === 'both_stages') {
+                // Two-stage analysis - binary then multi-label
+                analysisMethod = `Two-Stage AI Analysis (Complete Pipeline):
+Stage 1: Binary "No Finding" classifier indicated pathological findings possible
+Stage 2: Multi-label pathological classifier analyzed specific conditions`;
+                
+                findingsText = `PATHOLOGICAL FINDINGS DETECTED:\n${result.pathological_conditions.join(', ')}\n\n`;
+                findingsText += `STAGE 1 - BINARY CLASSIFICATION:\n`;
+                findingsText += `- No Finding probability: ${(result.no_finding_probability * 100).toFixed(1)}%\n`;
+                findingsText += `- Classification: Pathological findings likely\n\n`;
+                findingsText += `STAGE 2 - DETAILED PATHOLOGICAL ANALYSIS:\n`;
+                
+                if (result.probabilities) {
+                    result.probabilities.slice(0, 8).forEach(finding => {
+                        const status = finding.predicted ? '(POSITIVE)' : '(below threshold)';
+                        findingsText += `- ${finding.name}: ${finding.percentage.toFixed(1)}% ${status}\n`;
+                    });
+                }
+                
+                impressionText = `Two-stage AI analysis detected pathological findings: ${result.pathological_conditions.join(', ')}. Clinical correlation and radiologist review recommended.`;
+            }
+
+            const report = `CHEST X-RAY ANALYSIS REPORT
+
+Date: ${currentDate}
+Patient ID: [Patient ID]
+Study: Chest X-Ray PA/Lateral
+
+AI SYSTEM ANALYSIS:
+${analysisMethod}
+
+${findingsText}
+
+PROBABILITY ANALYSIS:
+Two-stage threshold-optimized classification system:
+${result.probabilities ? result.probabilities.map(p => `${p.name}: ${p.percentage.toFixed(1)}% (threshold: ${(p.threshold * 100).toFixed(1)}%)`).join('\n') : 'Binary classification only - no detailed probabilities'}
+
+IMPRESSION:
+${impressionText}
+
+AI Analysis Confidence: ${result.model_confidence}
+Analysis Type: ${result.stage_used === 'binary_only' ? 'Binary Classification' : 'Two-Stage Analysis'}
+Reviewed by: Two-Stage AI-Assisted Diagnostic System v2.0
+Requires: Radiologist verification and clinical correlation
+
+DISCLAIMER: This two-stage AI analysis is for assistance only and should not replace professional medical judgment.`;
+
+            reportText.value = report;
+        }
+
+        function showError(message) {
+            const probabilityBars = document.getElementById('probabilityBars');
+            const findingsStatus = document.getElementById('findingsStatus');
+            
+            findingsStatus.textContent = 'Analysis Failed';
+            findingsStatus.className = 'findings-status findings-detected';
+            
+            probabilityBars.innerHTML = `
+                <div class="error-message">
+                    <strong>Analysis Error:</strong><br>
+                    ${message}<br><br>
+                    Please check your internet connection and ensure the AI server is running.
+                </div>
+            `;
+        }
+
+        // AI Assistant (enhanced with actual prediction context)
         document.getElementById('aiInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 handleAIQuery();
@@ -664,48 +824,90 @@ Requires: Radiologist verification and clinical correlation
             
             if (!input.trim()) return;
 
-            // Simulate AI response
-            response.innerHTML = '<p style="color: #888;">Processing your query...</p>';
+            response.innerHTML = '<div class="loading-spinner"></div><p style="color: #888;">Processing your query...</p>';
             
             setTimeout(() => {
-                let aiResponse = '';
-                if (input.toLowerCase().includes('cardiomegaly') || input.toLowerCase().includes('heart')) {
-                    aiResponse = 'Cardiomegaly analysis: The AI model evaluates cardiac silhouette size and shape. Look for cardiothoracic ratio >50% on PA view. Consider clinical correlation with patient symptoms, ECG, and echocardiography if elevated probability detected.';
-                } else if (input.toLowerCase().includes('pneumonia') || input.toLowerCase().includes('consolidation')) {
-                    aiResponse = 'Pneumonia vs Consolidation: The model differentiates between infectious (pneumonia) and non-infectious consolidation. Consider air bronchograms, distribution patterns, and clinical presentation. Consolidation may indicate pneumonia, pulmonary edema, or other causes.';
-                } else if (input.toLowerCase().includes('pneumothorax')) {
-                    aiResponse = 'Pneumothorax evaluation: Look for pleural line separation and absence of lung markings. Small pneumothoraces may be subtle - check for deep sulcus sign on supine films. Clinical urgency depends on size and patient stability.';
-                } else if (input.toLowerCase().includes('effusion')) {
-                    aiResponse = 'Pleural effusion assessment: The model detects blunting of costophrenic angles and meniscus signs. Consider lateral view for small effusions. Differentiate from consolidation and assess for underlying lung pathology.';
-                } else if (input.toLowerCase().includes('mass') || input.toLowerCase().includes('nodule')) {
-                    aiResponse = 'Mass vs Nodule distinction: Masses are >3cm, nodules <3cm. The AI evaluates shape, margins, and density. Spiculated or irregular margins raise concern. Consider CT follow-up for characterization and staging if positive.';
-                } else if (input.toLowerCase().includes('atelectasis')) {
-                    aiResponse = 'Atelectasis analysis: Look for volume loss, shifted fissures, and compensatory hyperinflation. Differentiate obstructive (mass/foreign body) from non-obstructive causes (compression, adhesion). Consider bronchoscopy if persistent.';
-                } else if (input.toLowerCase().includes('differential')) {
-                    aiResponse = 'Differential diagnosis for chest X-ray findings: 1) Infectious: Pneumonia, TB, fungal 2) Neoplastic: Primary lung cancer, metastases 3) Cardiac: CHF, cardiomegaly 4) Pulmonary: COPD, fibrosis, pneumothorax 5) Pleural: Effusion, thickening. Clinical correlation essential.';
-                } else {
-                    aiResponse = 'I can help interpret findings from our 14-disease classification model: Cardiomegaly, Hernia, Infiltration, Nodule, Emphysema, Effusion, Atelectasis, Pleural Thickening, Pneumothorax, Mass, Fibrosis, Consolidation, Edema, and Pneumonia. Ask about specific conditions, differential diagnosis, or clinical correlation.';
-                }
-                
+                let aiResponse = generateContextualResponse(input, lastPredictionResult);
                 response.innerHTML = `<p>${aiResponse}</p>`;
                 document.getElementById('aiInput').value = '';
             }, 1500);
         }
 
+        function generateContextualResponse(query, predictionResult) {
+            const q = query.toLowerCase();
+            
+            if (!predictionResult) {
+                return "Please upload an X-ray image first so I can provide specific analysis and recommendations based on the two-stage AI findings.";
+            }
+
+            // Context-aware responses based on two-stage prediction system
+            if (q.includes('findings') || q.includes('detected')) {
+                if (predictionResult.no_finding_predicted) {
+                    return `The two-stage AI system indicates "No Finding" - suggesting a normal chest X-ray. The binary classifier (Stage 1) determined this with ${(predictionResult.no_finding_probability * 100).toFixed(1)}% confidence, so the multi-label pathological analysis (Stage 2) was not needed. However, clinical correlation is always recommended.`;
+                } else if (predictionResult.has_findings) {
+                    const topFinding = predictionResult.probabilities[0];
+                    return `The two-stage AI analysis detected pathological findings: ${predictionResult.pathological_conditions.join(', ')}. The binary classifier (Stage 1) indicated pathological findings were likely (${(predictionResult.no_finding_probability * 100).toFixed(1)}% No Finding probability), then the multi-label classifier (Stage 2) identified the highest probability finding as ${topFinding.name} at ${topFinding.percentage.toFixed(1)}%. I recommend clinical correlation and radiologist review.`;
+                } else {
+                    return `The two-stage AI analysis completed but results are unclear. The binary classifier suggested pathological findings might be present, but the multi-label classifier didn't identify specific conditions above thresholds. Clinical correlation is recommended.`;
+                }
+            }
+
+            if (q.includes('confidence') || q.includes('reliable') || q.includes('accuracy')) {
+                return `This two-stage system uses: (1) A binary classifier to determine if findings are present, with ${(predictionResult.no_finding_probability * 100).toFixed(1)}% confidence for "No Finding", and (2) A multi-label classifier for specific pathological conditions when needed. The overall confidence is ${predictionResult.model_confidence}. This staged approach improves accuracy by first filtering normal cases.`;
+            }
+
+            if (q.includes('next steps') || q.includes('recommendations') || q.includes('what should')) {
+                if (predictionResult.no_finding_predicted) {
+                    return `Since the binary AI classifier indicates "No Finding" with high confidence, typical next steps include: 1) Radiologist confirmation of normal findings, 2) Clinical correlation with patient symptoms, 3) Consider if symptoms warrant further investigation despite normal AI analysis, 4) Document normal findings in patient record.`;
+                } else if (predictionResult.has_findings) {
+                    return `The two-stage analysis detected pathological findings. Recommended next steps: 1) Have a radiologist review the specific findings: ${predictionResult.pathological_conditions.join(', ')}, 2) Consider clinical correlation with patient symptoms, 3) Determine if additional imaging (CT, MRI) is needed, 4) Follow institutional protocols for the detected conditions.`;
+                } else {
+                    return `Since the results are unclear from the two-stage analysis, next steps include: 1) Radiologist review of both the image and AI results, 2) Clinical correlation with patient presentation, 3) Consider repeat imaging if symptoms persist, 4) Manual analysis may be needed to clarify findings.`;
+                }
+            }
+
+            if (q.includes('two stage') || q.includes('system') || q.includes('how') || q.includes('works')) {
+                return `The two-stage AI system works as follows: Stage 1 uses a binary classifier to determine if any pathological findings are present (No Finding vs All Others). If "No Finding" is predicted, we stop there. If pathological findings are likely, Stage 2 uses a multi-label classifier to identify specific conditions like pneumonia, cardiomegaly, etc. This approach is more efficient and often more accurate than single-stage classification.`;
+            }
+
+            // Default response with current context
+            if (predictionResult.no_finding_predicted) {
+                return `The two-stage AI analysis completed at Stage 1, indicating "No Finding" and suggesting a normal chest X-ray. Ask me about the significance of this result, next steps, or if you have questions about the two-stage classification system.`;
+            } else {
+                const topFinding = predictionResult.probabilities && predictionResult.probabilities[0] ? predictionResult.probabilities[0] : null;
+                if (topFinding) {
+                    return `The two-stage AI analysis proceeded through both stages and identified ${topFinding.name} as the highest probability finding at ${topFinding.percentage.toFixed(1)}%. Ask me about specific conditions, next steps, differential diagnosis, or how the two-stage system works.`;
+                } else {
+                    return `The two-stage AI analysis completed but didn't identify specific pathological conditions. Ask me about the analysis process, next steps, or clinical recommendations.`;
+                }
+            }
+        }
+
         function downloadReport() {
-            // Simulate report generation
+            if (!lastPredictionResult) {
+                alert('Please analyze an image first before downloading the report.');
+                return;
+            }
+
             const reportText = document.getElementById('reportText').value;
             const blob = new Blob([reportText], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'chest_xray_report.txt';
+            a.download = `chest_xray_report_${new Date().toISOString().split('T')[0]}.txt`;
             a.click();
             URL.revokeObjectURL(url);
         }
 
-        // Initialize with original filter active
-        document.querySelector('[data-filter="original"]').classList.add('active');
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set original filter as active
+            document.querySelector('[data-filter="original"]').classList.add('active');
+            
+            // Check API status on load and periodically
+            checkApiStatus();
+            setInterval(checkApiStatus, 30000); // Check every 30 seconds
+        });
     </script>
 </body>
 </html>
