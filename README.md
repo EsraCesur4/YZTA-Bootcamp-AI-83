@@ -149,6 +149,64 @@ belirli bir formatla gruba aktarılmıştır.
 - Takım içi görev dağılımları yapıldı.
 
 
+---
+
+#  Sprint 2
+
+## Sprint Notları
+Sprint 2 kapsamında model geliştirme çalışmaları devam ettirilmiş, görselleştirme ve göğüs X-ray görüntülerinin sınıflandırılması yapılmıştır.  
+Ayrıca, sistemin hem frontend hem de backend tarafında geliştirme çalışmaları gerçekleştirilmiştir.
+
+---
+
+##  Sprint Puanları
+
+- **Toplam Backlog Puanı:** 340 puan  
+- **Sprint 2 Hedefi:** 120 puan
+
+**Sprint 2 içeriği:**
+- Ana modellerin eğitimi  
+- Görselleştirme çıktılarının alınması  
+- LLM destekli raporlama sistemine başlangıç  
+- Frontend ve backend geliştirmeleri  
+
+---
+
+## 🗣 Daily Scrum
+
+Günlük scrum toplantılarımız **WhatsApp grubu üzerinden yazılı olarak** gerçekleştirilmiştir.  
+
+🗂 **Günlük konuşma kayıtları:**  
+📄 [daily2.pdf](Documentation/daily2.pdf)
+
+---
+
+##  Sprint Board
+
+![Sprint Board](Documentation/trello2.png)
+
+---
+
+##  Sprint Review
+
+- Göğüs X-ray verileri sınıflandırılarak analiz edilmiştir.  
+- Görselleştirme çıktıları başarıyla alınmış ve yorumlanmıştır.  
+- LLM entegrasyonu başlatılmıştır (rapor üretimi için prompt çalışmaları yapılmıştır).  
+- Hastalıklı olarak etiketlenmiş veriler üzerinde çok sınıflı (multi-class) sınıflandırma modeli eğitilmiştir.  
+- Raporlama sistemine yönelik prototipleme süreci başlatılmıştır.
+
+**Sprint Review Katılımcıları:**
+- Esra Cesur  
+- İclal Karahisar  
+- Atakan Emir Çaldağ  
+- Emir Can İpsalalı
+
+---
+
+## Sprint Retrospective
+
+- Görselleştirme çıktıları, model doğruluğuyla tutarlı şekilde başarılı sonuçlar verdi.  
+- Bir sonraki sprintte sistem entegrasyonu ve demo yayınına ağırlık verilecek.
 
 
 
