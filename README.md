@@ -187,6 +187,21 @@ Günlük scrum toplantılarımız **WhatsApp grubu üzerinden yazılı olarak** 
 
 ---
 
+## Ürün Durumu (Ekran Görüntüleri)
+
+![RadiologyWorkbench_Login_Arayüzü](https://github.com/user-attachments/assets/81fd4265-a102-4f0d-8c31-dff87649044d)
+
+![RadiologyWorkbench_Web_Arayüzü_Model_No_Finding](https://github.com/user-attachments/assets/39f2d190-06b1-44bb-903d-9b0784459859
+)
+
+![RadiologyWorkbench_Web_Arayüzü_Model_Findings_Detected](https://github.com/user-attachments/assets/ac744a94-6b8b-487c-8d9e-74af5ffb37f2
+)
+
+![RadiologyWorkbench_Web_Arayüzü_Assistant_Answer](https://github.com/user-attachments/assets/07777a35-53fa-4be7-b426-5d03f7024a25
+)
+
+---
+
 ##  Sprint Review
 
 - Göğüs X-ray verileri sınıflandırılarak analiz edilmiştir.  
