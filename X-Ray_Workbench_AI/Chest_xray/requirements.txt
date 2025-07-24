@@ -1,0 +1,6 @@
+Flask
+flask-cors
+tensorflow==2.13.0
+Pillow
+numpy
+keras==2.13.1

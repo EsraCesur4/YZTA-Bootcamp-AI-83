@@ -1,0 +1,17 @@
+# Ignore all virtual environments
+venv/
+*/venv/
+**/venv/
+
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+
+# Ignore notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore environment files
+.env
+
+# Ignore outputs
+data/output/

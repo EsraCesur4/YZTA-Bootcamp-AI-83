@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radiology AI - Dental X-Ray Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            color: #00d4ff;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-online { background-color: #22c55e; }
+        .status-offline { background-color: #ef4444; }
+        .status-loading { background-color: #f59e0b; animation: pulse 2s infinite; }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            padding: 40px;
+            min-height: calc(100vh - 140px);
+        }
+
+        .left-panel {
+            background: rgba(25, 25, 25, 0.8);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .right-panel {
+            background: rgba(25, 25, 25, 0.8);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #00d4ff;
+            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(0, 212, 255, 0.3);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: rgba(0, 212, 255, 0.6);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .upload-area.has-image {
+            border-color: rgba(0, 212, 255, 0.6);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .upload-area.analyzing {
+            border-color: rgba(245, 158, 11, 0.6);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #00d4ff;
+            margin-bottom: 20px;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .image-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: none;
+            gap: 10px;
+        }
+
+        .upload-area.has-image .image-controls {
+            display: flex;
+        }
+
+        .control-btn {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(0, 212, 255, 0.8);
+            border-color: #00d4ff;
+        }
+
+        .delete-btn {
+            background: rgba(239, 68, 68, 0.7);
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.9);
+        }
+
+        .enhancement-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .enhancement-btn {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 212, 255, 0.05) 100%);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: #ffffff;
+            padding: 15px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .enhancement-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 212, 255, 0.1) 100%);
+            border-color: rgba(0, 212, 255, 0.6);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.2);
+        }
+
+        .enhancement-btn.active {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            border-color: #00d4ff;
+            color: #000;
+        }
+
+        .findings-status {
+            text-align: center;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            font-size: 18px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .findings-status.normal {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 100%);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+
+        .findings-status.cavities {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .findings-status.fillings {
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.2) 0%, rgba(156, 39, 176, 0.1) 100%);
+            border: 1px solid rgba(156, 39, 176, 0.3);
+            color: #9c27b0;
+        }
+
+        .findings-status.impacted_teeth {
+            background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 152, 0, 0.1) 100%);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+            color: #ff9800;
+        }
+
+        .findings-status.impactedteeth {
+            background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 152, 0, 0.1) 100%);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+            color: #ff9800;
+        }
+
+        .findings-status.implants {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #3b82f6;
+        }
+
+        .findings-status.analyzing {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #f59e0b;
+        }
+
+        /* New styles for detection visualization */
+        .detection-visualization {
+            margin-bottom: 30px;
+            text-align: center;
+            display: none;
+        }
+
+        .detection-visualization.show {
+            display: block;
+        }
+
+        .detection-title {
+            font-size: 16px;
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .detection-image-container {
+            position: relative;
+            display: inline-block;
+            margin: 0 auto;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .detection-result-image {
+            max-width: 100%;
+            max-height: 350px;
+            display: block;
+        }
+
+        .detection-count-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00d4ff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .detection-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            border-radius: 13px;
+            z-index: 10;
+        }
+
+        .probability-bars {
+            margin-bottom: 30px;
+        }
+
+        .probability-item {
+            margin-bottom: 12px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .probability-item.predicted {
+            border-color: rgba(0, 212, 255, 0.5);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .probability-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .condition-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .predicted-badge {
+            background: #00d4ff;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .detected-badge {
+            background: #22c55e;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .probability-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .probability-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.8s ease;
+        }
+
+        .normal-fill { background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); }
+        .cavities-fill { background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); }
+        .fillings-fill { background: linear-gradient(90deg, #9c27b0 0%, #7b1fa2 100%); }
+        .impacted_teeth-fill { background: linear-gradient(90deg, #ff9800 0%, #f57c00 100%); }
+        .implants-fill { background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); }
+
+        .report-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .report-section h3 {
+            font-size: 16px;
+            color: #00d4ff;
+            margin-bottom: 15px;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        .download-btn:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: #888;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .report-textarea {
+            width: 100%;
+            min-height: 200px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: #ffffff;
+            padding: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .report-textarea:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+        }
+
+        .ai-assistant {
+            background: rgba(25, 25, 25, 0.8);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .ai-input {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .ai-input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+        }
+
+        .ai-response {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-height: 100px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #00d4ff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .prediction-confidence {
+            font-size: 12px;
+            color: #888;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .severity-indicator {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .severity-normal { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .severity-mild { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .severity-moderate { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Radiology AI - Dental X-Ray Analysis</h1>
+        <div class="subtitle">
+            <span class="status-indicator status-offline" id="apiStatus"></span>
+            <span id="apiStatusText">Connecting to AI Server...</span>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="section-title">Dental X-Ray Image Upload & Enhancement</div>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">🦷</div>
+                <p>Click to upload dental X-ray image</p>
+                <p style="font-size: 12px; color: #888; margin-top: 10px;">Supports JPEG, PNG, DICOM formats</p>
+                <input type="file" id="imageUpload" accept="image/*">
+                
+                <div class="image-controls">
+                    <button class="control-btn" onclick="changeImage()">📷 Change</button>
+                    <button class="control-btn delete-btn" onclick="deleteImage()">🗑️ Delete</button>
+                </div>
+            </div>
+
+            <div class="enhancement-controls">
+                <button class="enhancement-btn active" data-filter="original">Original</button>
+                <button class="enhancement-btn" data-filter="invert">Negative</button>
+                <button class="enhancement-btn" data-filter="green">Green Channel</button>
+                <button class="enhancement-btn" data-filter="clahe">CLAHE</button>
+                <button class="enhancement-btn" data-filter="heatmap">Heatmap</button>
+            </div>
+
+            <div class="report-section">
+                <h3>Download Report</h3>
+                <button class="download-btn" id="downloadBtn" onclick="downloadReport()" disabled>📄 Generate & Download PDF Report</button>
+            </div>
+
+            <div class="report-section">
+                <h3>Edit Report</h3>
+                <textarea class="report-textarea" id="reportText" placeholder="Analysis results will appear here after image upload...">
+DENTAL X-RAY ANALYSIS REPORT
+
+Date: ${new Date().toLocaleDateString()}
+Patient ID: [Patient ID]
+Study: Dental X-Ray Analysis
+
+AI MODEL ANALYSIS:
+4-Class Classification System for:
+- Cavities: Tooth decay and carious lesions
+- Fillings: Dental restorations and composite fillings
+- Impacted Teeth: Impacted or partially erupted teeth
+- Implants: Dental implants and prosthetic devices
+
+FINDINGS:
+Upload an image to generate AI analysis...
+
+CLASSIFICATION RESULTS:
+Awaiting image upload for classification.
+
+IMPRESSION:
+No analysis performed yet.
+
+AI Analysis Confidence: Pending
+Reviewed by: 4-Class AI Diagnostic System
+Requires: Radiologist verification and clinical correlation
+                </textarea>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="section-title">Dental Analysis Results</div>
+            
+            <div class="findings-status analyzing" id="findingsStatus">
+                Upload Image to Begin Analysis
+            </div>
+
+            <!-- Detection Visualization Section - Auto appears after prediction -->
+            <div class="detection-visualization" id="detectionVisualization">
+                <div class="detection-title">🎯 Object Detection Results</div>
+                <div class="detection-image-container">
+                    <img id="detectionResultImage" class="detection-result-image" alt="Detection Results">
+                    <canvas id="detectionCanvas" class="detection-canvas"></canvas>
+                    <div class="detection-count-badge" id="detectionCountBadge">0 detections</div>
+                </div>
+            </div>
+
+            <!-- Classification Probability Bars -->
+            <div class="probability-bars" id="probabilityBars">
+                <p style="text-align: center; color: #888; padding: 40px;">
+                    Please upload a dental X-ray image to see analysis results.<br>
+                    <small><strong>4-Class AI Classification System:</strong><br>
+                    • Cavities - Tooth decay and carious lesions<br>
+                    • Fillings - Dental restorations and composite fillings<br>
+                    • Impacted Teeth - Impacted or partially erupted teeth<br>
+                    • Implants - Dental implants and prosthetic devices<br>
+                    </small>
+                </p>
+            </div>
+
+            <div class="prediction-confidence" id="predictionConfidence"></div>
+        </div>
+    </div>
+
+    <div class="ai-assistant">
+        <div class="section-title">AI Assistant</div>
+        <input type="text" class="ai-input" id="aiInput" placeholder="Ask about the findings, differential diagnosis, or clinical recommendations...">
+        <div class="ai-response" id="aiResponse">
+            <p style="color: #888; font-style: italic;">AI Assistant ready. Upload a dental X-ray image and ask questions about the findings, object detections, treatment recommendations, or view options. The system provides both classification probabilities and object detection with bounding boxes for dental conditions: Cavities, Fillings, Impacted Teeth, and Implants.</p>
+        </div>
+    </div>
+
+    <script>
+        let currentImage = null;
+        let currentFilter = 'original';
+        let lastPredictionResult = null;
+        let detectionCanvas = null;
+        let detectionContext = null;
+        let apiBaseUrl = 'http://localhost:5000'; // Update this if your API is hosted elsewhere
+
+        // Colors for different dental conditions
+        const conditionColors = {
+            'Cavities': '#ef4444',
+            'Fillings': '#9c27b0', 
+            'Impacted_Teeth': '#ff9800',
+            'Implants': '#3b82f6'
+        };
+
+        // API status tracking
+        async function checkApiStatus() {
+            try {
+                console.log(`Checking API status at: ${apiBaseUrl}/health`);
+                const response = await fetch(`${apiBaseUrl}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    mode: 'cors'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('API status:', data);
+                
+                const statusIndicator = document.getElementById('apiStatus');
+                const statusText = document.getElementById('apiStatusText');
+                
+                if (data.status === 'healthy' && data.model_loaded) {
+                    statusIndicator.className = 'status-indicator status-online';
+                    statusText.textContent = `AI Server Online (${data.device})`;
+                } else {
+                    statusIndicator.className = 'status-indicator status-offline';
+                    statusText.textContent = 'AI Server: Model Not Loaded';
+                }
+            } catch (error) {
+                const statusIndicator = document.getElementById('apiStatus');
+                const statusText = document.getElementById('apiStatusText');
+                statusIndicator.className = 'status-indicator status-offline';
+                statusText.textContent = 'AI Server Offline';
+            }
+        }
+
+        // Upload functionality
+        document.getElementById('uploadArea').addEventListener('click', function(e) {
+            if (!e.target.closest('.image-controls')) {
+                document.getElementById('imageUpload').click();
+            }
+        });
+
+        document.getElementById('imageUpload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentImage = e.target.result;
+                    displayImage();
+                    analyzeImage(file);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function displayImage() {
+            const uploadArea = document.getElementById('uploadArea');
+            uploadArea.innerHTML = `
+                <img src="${currentImage}" alt="Dental X-ray" class="image-preview" id="imagePreview">
+                <div class="image-controls">
+                    <button class="control-btn" onclick="changeImage()">📷 Change</button>
+                    <button class="control-btn delete-btn" onclick="deleteImage()">🗑️ Delete</button>
+                </div>
+            `;
+            uploadArea.classList.add('has-image');
+            applyFilter(currentFilter);
+        }
+
+        function setupDetectionCanvas() {
+            const detectionImage = document.getElementById('detectionResultImage');
+            detectionCanvas = document.getElementById('detectionCanvas');
+            detectionContext = detectionCanvas.getContext('2d');
+            
+            // Function to set canvas size and draw detections
+            function setupCanvasAndDraw() {
+                if (detectionImage.naturalWidth && detectionImage.naturalHeight) {
+                    // Set canvas size to match the displayed image size
+                    const rect = detectionImage.getBoundingClientRect();
+                    detectionCanvas.width = rect.width;
+                    detectionCanvas.height = rect.height;
+                    
+                    // Draw detections if we have them
+                    if (lastPredictionResult && lastPredictionResult.detection_details) {
+                        drawDetections();
+                    }
+                }
+            }
+            
+            // Wait for image to load
+            detectionImage.onload = setupCanvasAndDraw;
+            
+            // If image is already loaded
+            if (detectionImage.complete && detectionImage.naturalWidth) {
+                setupCanvasAndDraw();
+            }
+            
+            // Also setup on window resize to maintain proper scaling
+            window.addEventListener('resize', setupCanvasAndDraw);
+        }
+
+        function changeImage() {
+            document.getElementById('imageUpload').click();
+        }
+
+        function deleteImage() {
+            currentImage = null;
+            lastPredictionResult = null;
+            const uploadArea = document.getElementById('uploadArea');
+            
+            uploadArea.innerHTML = `
+                <div class="upload-icon">🦷</div>
+                <p>Click to upload dental X-ray image</p>
+                <p style="font-size: 12px; color: #888; margin-top: 10px;">Supports JPEG, PNG, DICOM formats</p>
+                <input type="file" id="imageUpload" accept="image/*">
+            `;
+            uploadArea.classList.remove('has-image', 'analyzing');
+            
+            // Reset the file input
+            document.getElementById('imageUpload').value = '';
+            
+            // Re-attach event listener
+            document.getElementById('imageUpload').addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        currentImage = e.target.result;
+                        displayImage();
+                        analyzeImage(file);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Reset UI
+            resetAnalysisUI();
+        }
+
+        function resetAnalysisUI() {
+            const findingsStatus = document.getElementById('findingsStatus');
+            const probabilityBars = document.getElementById('probabilityBars');
+            const predictionConfidence = document.getElementById('predictionConfidence');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const reportText = document.getElementById('reportText');
+            const detectionVisualization = document.getElementById('detectionVisualization');
+            
+            findingsStatus.textContent = 'Upload Image to Begin Analysis';
+            findingsStatus.className = 'findings-status analyzing';
+            
+            // Hide detection visualization and clear canvas
+            detectionVisualization.classList.remove('show');
+            if (detectionCanvas && detectionContext) {
+                clearDetections();
+            }
+            
+            probabilityBars.innerHTML = `
+                <p style="text-align: center; color: #888; padding: 40px;">
+                    Please upload a dental X-ray image to see analysis results.<br>
+                    <small><strong>4-Class AI Classification System:</strong><br>
+                    • Cavities - Tooth decay and carious lesions<br>
+                    • Fillings - Dental restorations and composite fillings<br>
+                    • Impacted Teeth - Impacted or partially erupted teeth<br>
+                    • Implants - Dental implants and prosthetic devices<br>
+                    </small>
+                </p>
+            `;
+            
+            predictionConfidence.textContent = '';
+            downloadBtn.disabled = true;
+            
+            reportText.value = `DENTAL X-RAY ANALYSIS REPORT
+
+Date: ${new Date().toLocaleDateString()}
+Patient ID: [Patient ID]
+Study: Dental X-Ray Analysis
+
+AI MODEL ANALYSIS:
+4-Class Classification System for:
+- Cavities: Tooth decay and carious lesions
+- Fillings: Dental restorations and composite fillings
+- Impacted Teeth: Impacted or partially erupted teeth
+- Implants: Dental implants and prosthetic devices
+
+FINDINGS:
+Upload an image to generate AI analysis...
+
+CLASSIFICATION RESULTS:
+Awaiting image upload for classification.
+
+IMPRESSION:
+No analysis performed yet.
+
+AI Analysis Confidence: Pending
+Reviewed by: 4-Class AI Diagnostic System
+Requires: Radiologist verification and clinical correlation`;
+        }
+
+        function drawDetections() {
+            if (!detectionContext || !lastPredictionResult || !lastPredictionResult.detection_details) {
+                return;
+            }
+
+            clearDetections();
+            
+            const detectionImage = document.getElementById('detectionResultImage');
+            const detections = lastPredictionResult.detection_details.detections;
+            
+            if (!detections || detections.length === 0) {
+                return;
+            }
+
+            // Make sure image is loaded and has dimensions
+            if (!detectionImage.naturalWidth || !detectionImage.naturalHeight) {
+                console.log('Image not fully loaded yet, retrying...');
+                setTimeout(drawDetections, 100);
+                return;
+            }
+
+            // Calculate scale factors based on displayed image size vs natural image size
+            const rect = detectionImage.getBoundingClientRect();
+            const scaleX = rect.width / detectionImage.naturalWidth;
+            const scaleY = rect.height / detectionImage.naturalHeight;
+
+            console.log('Drawing detections:', detections.length);
+            console.log('Scale factors:', scaleX, scaleY);
+            console.log('Canvas size:', detectionCanvas.width, detectionCanvas.height);
+
+            detections.forEach((detection, index) => {
+                const color = conditionColors[detection.class_name] || '#ffffff';
+                
+                // Scale bounding box coordinates
+                const x1 = detection.bbox[0] * scaleX;
+                const y1 = detection.bbox[1] * scaleY;
+                const x2 = detection.bbox[2] * scaleX;
+                const y2 = detection.bbox[3] * scaleY;
+                
+                const width = x2 - x1;
+                const height = y2 - y1;
+
+                console.log(`Detection ${index}: ${detection.class_name} at [${x1}, ${y1}, ${width}, ${height}]`);
+
+                // Draw bounding box
+                detectionContext.strokeStyle = color;
+                detectionContext.lineWidth = 3;
+                detectionContext.strokeRect(x1, y1, width, height);
+
+                // Draw filled background for label
+                const label = `${detection.class_name} ${(detection.confidence * 100).toFixed(1)}%`;
+                detectionContext.font = 'bold 14px Arial';
+                const textMetrics = detectionContext.measureText(label);
+                const textWidth = textMetrics.width;
+                const textHeight = 18;
+
+                // Draw label background
+                detectionContext.fillStyle = color;
+                detectionContext.fillRect(x1, y1 - textHeight - 4, textWidth + 8, textHeight + 4);
+
+                // Draw label text
+                detectionContext.fillStyle = '#000000';
+                detectionContext.fillText(label, x1 + 4, y1 - 6);
+            });
+        }
+
+        function clearDetections() {
+            if (detectionContext && detectionCanvas) {
+                detectionContext.clearRect(0, 0, detectionCanvas.width, detectionCanvas.height);
+                console.log('Cleared detection canvas');
+            }
+        }
+
+        // Enhancement controls
+        document.querySelectorAll('.enhancement-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.enhancement-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                applyFilter(currentFilter);
+            });
+        });
+
+        function applyFilter(filter) {
+            const img = document.getElementById('imagePreview');
+            if (!img) return;
+
+            let filterStyle = '';
+            switch(filter) {
+                case 'original':
+                    filterStyle = 'none';
+                    break;
+                case 'invert':
+                    filterStyle = 'invert(1)';
+                    break;
+                case 'green':
+                    filterStyle = 'sepia(1) saturate(5) hue-rotate(90deg)';
+                    break;
+                case 'clahe':
+                    filterStyle = 'contrast(1.5) brightness(1.2)';
+                    break;
+                case 'heatmap':
+                    filterStyle = 'contrast(1.3) brightness(1.1) saturate(0) sepia(1) hue-rotate(0deg) saturate(3)';
+                    break;
+            }
+            img.style.filter = filterStyle;
+        }
+
+        // Analyze image using the API
+        async function analyzeImage(file) {
+            const findingsStatus = document.getElementById('findingsStatus');
+            const uploadArea = document.getElementById('uploadArea');
+            const probabilityBars = document.getElementById('probabilityBars');
+            
+            // Show analyzing state
+            findingsStatus.textContent = 'Analyzing Image...';
+            findingsStatus.className = 'findings-status analyzing';
+            uploadArea.classList.add('analyzing');
+            
+            probabilityBars.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <div class="loading-spinner"></div>
+                    AI analysis in progress...
+                </div>
+            `;
+
+            try {
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('image', file);
+
+                console.log(`Sending request to: ${apiBaseUrl}/predict`);
+                console.log(`File size: ${file.size} bytes`);
+
+                // Call API
+                const response = await fetch(`${apiBaseUrl}/predict`, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'cors'
+                });
+
+                console.log(`Response status: ${response.status}`);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const result = await response.json();
+                console.log('Prediction result:', result);
+                
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                // Store result for report generation
+                lastPredictionResult = result;
+                
+                // Update UI with results
+                displayPredictionResults(result);
+                updateReport(result);
+                
+                // Enable download button
+                document.getElementById('downloadBtn').disabled = false;
+                
+            } catch (error) {
+                console.error('Analysis error:', error);
+                showError(error.message);
+            } finally {
+                uploadArea.classList.remove('analyzing');
+            }
+        }
+
+        function displayPredictionResults(result) {
+            const findingsStatus = document.getElementById('findingsStatus');
+            const probabilityBars = document.getElementById('probabilityBars');
+            const predictionConfidence = document.getElementById('predictionConfidence');
+            const detectionVisualization = document.getElementById('detectionVisualization');
+            const detectionResultImage = document.getElementById('detectionResultImage');
+            const detectionCountBadge = document.getElementById('detectionCountBadge');
+            
+            console.log('Display results:', result);
+            
+            // Get predicted class and confidence
+            const predictedClass = result.predicted_class.toLowerCase().replace('_', '');
+            const confidence = result.confidence;
+            
+            // Update status based on prediction
+            findingsStatus.textContent = result.predicted_class;
+            findingsStatus.className = `findings-status ${predictedClass}`;
+            
+            // Show detection visualization automatically
+            if (result.detection_details && result.detection_details.detections && result.detection_details.detections.length > 0) {
+                detectionVisualization.classList.add('show');
+                detectionResultImage.src = currentImage; // Use the same uploaded image
+                detectionCountBadge.textContent = `${result.detection_details.total_detections} detection${result.detection_details.total_detections !== 1 ? 's' : ''}`;
+                
+                // Setup canvas for drawing detections - ensure it happens after image loads
+                detectionResultImage.onload = function() {
+                    setupDetectionCanvas();
+                };
+                
+                // If image is already loaded (cached), setup immediately
+                if (detectionResultImage.complete) {
+                    setupDetectionCanvas();
+                }
+            } else {
+                // Hide detection visualization if no detections
+                detectionVisualization.classList.remove('show');
+            }
+            
+            // Get detected classes from detection_details
+            const detectedClasses = new Set();
+            if (result.detection_details && result.detection_details.detections) {
+                result.detection_details.detections.forEach(detection => {
+                    detectedClasses.add(detection.class_name);
+                });
+            }
+            
+            // Display probability bars for all 4 classes
+            probabilityBars.innerHTML = '';
+            
+            const classes = ['Cavities', 'Fillings', 'Impacted_Teeth', 'Implants'];
+            const probabilities = result.probabilities;
+            
+            classes.forEach((className, index) => {
+                const prob = probabilities[index];
+                const percentage = (prob * 100);
+                const isDetected = detectedClasses.has(className);
+                
+                const item = document.createElement('div');
+                item.className = `probability-item ${isDetected ? 'predicted' : ''}`;
+                
+                let fillClass = '';
+                const normalizedClassName = className.toLowerCase().replace('_', '');
+                switch(normalizedClassName) {
+                    case 'cavities': fillClass = 'cavities-fill'; break;
+                    case 'fillings': fillClass = 'fillings-fill'; break;
+                    case 'impactedteeth': fillClass = 'impacted_teeth-fill'; break;
+                    case 'implants': fillClass = 'implants-fill'; break;
+                }
+                
+                let severityClass = '';
+                if (percentage > 80) {
+                    severityClass = 'severity-severe';
+                } else if (percentage > 60) {
+                    severityClass = 'severity-moderate';
+                } else {
+                    severityClass = 'severity-mild';
+                }
+                
+                const displayName = className.replace('_', ' ');
+                
+                let badges = '';
+                if (isDetected) {
+                    badges += '<span class="detected-badge">DETECTED</span>';
+                }
+                
+                item.innerHTML = `
+                    <div class="probability-label">
+                        <div class="condition-name">
+                            <span>${displayName}</span>
+                            ${badges}
+                        </div>
+                        <span>
+                            ${percentage.toFixed(1)}%
+                            <span class="severity-indicator ${severityClass}">${percentage.toFixed(1)}%</span>
+                        </span>
+                    </div>
+                    <div class="probability-bar">
+                        <div class="probability-fill ${fillClass}" style="width: ${Math.min(percentage, 100)}%"></div>
+                    </div>
+                `;
+                probabilityBars.appendChild(item);
+            });
+            
+            // Add confidence info
+            const confidenceInfo = document.createElement('div');
+            confidenceInfo.innerHTML = `
+                <p style="text-align: center; color: #666; font-size: 12px; margin-top: 15px;">
+                    4-Class Classification System<br>
+                    Model Confidence: ${confidence.toFixed(1)}%
+                    ${detectedClasses.size > 0 ? `<br>Objects Detected: ${detectedClasses.size}` : ''}
+                </p>
+            `;
+            probabilityBars.appendChild(confidenceInfo);
+            
+            // Update confidence indicator
+            let confidenceText = `Model Confidence: ${confidence.toFixed(1)}% - ${result.predicted_class}`;
+            if (detectedClasses.size > 0) {
+                confidenceText += ` | ${detectedClasses.size} object${detectedClasses.size !== 1 ? 's' : ''} detected`;
+            }
+            predictionConfidence.textContent = confidenceText;
+        }
+
+        function updateReport(result) {
+            const reportText = document.getElementById('reportText');
+            const currentDate = new Date().toLocaleDateString();
+            
+            const predictedClass = result.predicted_class;
+            const confidence = result.confidence;
+            const probabilities = result.probabilities;
+            
+            // Get detection information
+            let detectionInfo = 'No objects detected by YOLO model.';
+            let detectedClasses = [];
+            if (result.detection_details && result.detection_details.detections && result.detection_details.detections.length > 0) {
+                const detections = result.detection_details.detections;
+                const classCounts = {};
+                detections.forEach(detection => {
+                    classCounts[detection.class_name] = (classCounts[detection.class_name] || 0) + 1;
+                    if (!detectedClasses.includes(detection.class_name)) {
+                        detectedClasses.push(detection.class_name);
+                    }
+                });
+                
+                const detectionSummary = Object.entries(classCounts).map(([name, count]) => 
+                    `${count} ${name}${count > 1 ? ' instances' : ' instance'}`
+                ).join(', ');
+                
+                detectionInfo = `YOLO Object Detection: ${result.detection_details.total_detections} total detection${result.detection_details.total_detections !== 1 ? 's' : ''} found - ${detectionSummary}.`;
+            }
+            
+            let clinicalImplication = '';
+            switch(predictedClass) {
+                case 'Cavities':
+                    clinicalImplication = 'Carious lesions detected. Dental treatment and restoration recommended.';
+                    break;
+                case 'Fillings':
+                    clinicalImplication = 'Dental restorations identified. Monitor for integrity and potential replacement needs.';
+                    break;
+                case 'Impacted_Teeth':
+                    clinicalImplication = 'Impacted teeth detected. Evaluate for extraction or orthodontic intervention.';
+                    break;
+                case 'Implants':
+                    clinicalImplication = 'Dental implants identified. Monitor for osseointegration and prosthetic stability.';
+                    break;
+            }
+            
+            const report = `DENTAL X-RAY ANALYSIS REPORT
+
+Date: ${currentDate}
+Patient ID: [Patient ID]
+Study: Dental X-Ray Analysis
+
+AI SYSTEM ANALYSIS:
+4-Class Deep Learning Classification System + YOLO Object Detection
+Architecture: Custom CNN for dental classification with object detection
+Training: Multi-class classification and object detection on dental imaging dataset
+
+CLASSIFICATION RESULTS:
+Primary Finding: ${predictedClass}
+Confidence: ${confidence.toFixed(1)}%
+
+PROBABILITY BREAKDOWN:
+Cavities: ${(probabilities[0] * 100).toFixed(1)}%
+Fillings: ${(probabilities[1] * 100).toFixed(1)}%
+Impacted Teeth: ${(probabilities[2] * 100).toFixed(1)}%
+Implants: ${(probabilities[3] * 100).toFixed(1)}%
+
+OBJECT DETECTION RESULTS:
+${detectionInfo}
+${detectedClasses.length > 0 ? `Detected Classes: ${detectedClasses.join(', ')}` : ''}
+
+CLINICAL INTERPRETATION:
+${clinicalImplication}
+
+IMPRESSION:
+AI classification indicates ${predictedClass} with ${confidence.toFixed(1)}% confidence. 
+${detectedClasses.length > 0 ? `Object detection confirms presence of: ${detectedClasses.join(', ')}.` : ''}
+Dental findings ${detectedClasses.length > 0 ? 'detected and localized' : 'classified'} - clinical evaluation and appropriate treatment planning recommended.
+
+AI Analysis System: 4-Class CNN Classifier + YOLO Object Detection
+Model Confidence: ${confidence > 80 ? 'High' : confidence > 60 ? 'Medium' : 'Low'}
+Objects Detected: ${detectedClasses.length > 0 ? `Yes (${detectedClasses.length} type${detectedClasses.length !== 1 ? 's' : ''})` : 'None'}
+Reviewed by: Hybrid AI Diagnostic System
+Requires: Specialist verification and clinical correlation
+
+DISCLAIMER: This AI analysis is for assistance only and should not replace professional medical judgment.`;
+
+            reportText.value = report;
+        }
+
+        function showError(message) {
+            const probabilityBars = document.getElementById('probabilityBars');
+            const findingsStatus = document.getElementById('findingsStatus');
+            const detectionVisualization = document.getElementById('detectionVisualization');
+            
+            findingsStatus.textContent = 'Analysis Failed';
+            findingsStatus.className = 'findings-status analyzing';
+            
+            // Hide detection visualization
+            detectionVisualization.classList.remove('show');
+            
+            probabilityBars.innerHTML = `
+                <div class="error-message">
+                    <strong>Analysis Error:</strong><br>
+                    ${message}<br><br>
+                    Please check your internet connection and ensure the AI server is running.
+                </div>
+            `;
+        }
+
+        // AI Assistant
+        document.getElementById('aiInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleAIQuery();
+            }
+        });
+
+        function handleAIQuery() {
+            const input = document.getElementById('aiInput').value;
+            const response = document.getElementById('aiResponse');
+            
+            if (!input.trim()) return;
+
+            response.innerHTML = '<div class="loading-spinner"></div><p style="color: #888;">Processing your query...</p>';
+            
+            setTimeout(() => {
+                let aiResponse = generateContextualResponse(input, lastPredictionResult);
+                response.innerHTML = `<p>${aiResponse}</p>`;
+                document.getElementById('aiInput').value = '';
+            }, 1500);
+        }
+
+        function generateContextualResponse(query, predictionResult) {
+            const q = query.toLowerCase();
+            
+            if (!predictionResult) {
+                return "Please upload a dental X-ray image first so I can provide specific analysis and recommendations based on the YOLO object detection and classification system.";
+            }
+
+            const predictedClass = predictionResult.predicted_class;
+            const confidence = predictionResult.confidence;
+            const detectionDetails = predictionResult.detection_details;
+
+            // Object detection specific responses
+            if (q.includes('detection') || q.includes('object') || q.includes('bounding box') || q.includes('location')) {
+                if (detectionDetails && detectionDetails.total_detections > 0) {
+                    const detectionSummary = detectionDetails.detections.map(d => 
+                        `${d.class_name} (${(d.confidence * 100).toFixed(1)}% confidence)`
+                    ).join(', ');
+                    return `Object detection found ${detectionDetails.total_detections} dental condition(s): ${detectionSummary}. The detection visualization is automatically shown above the probability bars with bounding boxes and individual detection details.`;
+                } else {
+                    return "No specific objects were detected by the YOLO model, but the classification system still provides probability assessments for each condition type.";
+                }
+            }
+
+            if (q.includes('how many') || q.includes('count') || q.includes('number')) {
+                if (detectionDetails && detectionDetails.total_detections > 0) {
+                    const counts = {};
+                    detectionDetails.detections.forEach(d => {
+                        counts[d.class_name] = (counts[d.class_name] || 0) + 1;
+                    });
+                    const countSummary = Object.entries(counts).map(([name, count]) => 
+                        `${count} ${name}${count > 1 ? 's' : ''}`
+                    ).join(', ');
+                    return `Detected ${detectionDetails.total_detections} total objects: ${countSummary}. Each detection has specific location coordinates and confidence scores shown in the detection visualization above.`;
+                } else {
+                    return "No individual objects were detected by the YOLO model. The system provides classification probabilities instead.";
+                }
+            }
+
+            // Context-aware responses based on classification
+            if (q.includes('findings') || q.includes('detected') || q.includes('what')) {
+                let response = `The AI classified this image as "${predictedClass}" with ${confidence.toFixed(1)}% confidence. ${getClassDescription(predictedClass)}`;
+                if (detectionDetails && detectionDetails.total_detections > 0) {
+                    response += ` Object detection found ${detectionDetails.total_detections} specific instance(s) of dental conditions, which are visualized above with bounding boxes.`;
+                }
+                return response;
+            }
+
+            if (q.includes('confidence') || q.includes('reliable') || q.includes('accuracy')) {
+                let response = `The YOLO-based system classified this image as "${predictedClass}" with ${confidence.toFixed(1)}% confidence. This ${confidence > 80 ? 'high' : confidence > 60 ? 'medium' : 'low'} confidence level suggests ${confidence > 80 ? 'strong certainty' : confidence > 60 ? 'reasonable certainty' : 'lower certainty'} in the prediction.`;
+                if (detectionDetails && detectionDetails.total_detections > 0) {
+                    const avgDetectionConf = detectionDetails.detections.reduce((sum, d) => sum + d.confidence, 0) / detectionDetails.detections.length;
+                    response += ` Individual object detections have an average confidence of ${(avgDetectionConf * 100).toFixed(1)}%.`;
+                }
+                return response;
+            }
+
+            if (q.includes('next steps') || q.includes('recommendations') || q.includes('what should')) {
+                return getRecommendations(predictedClass, confidence);
+            }
+
+            if (q.includes('differential') || q.includes('other') || q.includes('alternative')) {
+                return getDifferentialDiagnosis(predictedClass, predictionResult.probabilities);
+            }
+
+            // Default response with current context
+            let response = `The AI classified this image as "${predictedClass}" with ${confidence.toFixed(1)}% confidence.`;
+            if (detectionDetails && detectionDetails.total_detections > 0) {
+                response += ` Object detection identified ${detectionDetails.total_detections} specific dental condition(s) with bounding boxes shown automatically above.`;
+            }
+            response += " Ask me about detection details, treatment recommendations, or specific findings.";
+            return response;
+        }
+
+        function getClassDescription(predictedClass) {
+            switch(predictedClass) {
+                case 'Cavities':
+                    return 'This indicates tooth decay with carious lesions requiring dental intervention.';
+                case 'Fillings':
+                    return 'This shows dental restorations or composite fillings in the tooth structure.';
+                case 'Impacted_Teeth':
+                    return 'This indicates impacted or partially erupted teeth that may require surgical intervention.';
+                case 'Implants':
+                    return 'This shows dental implants or prosthetic devices integrated into the jaw bone.';
+                default:
+                    return 'This classification requires clinical correlation.';
+            }
+        }
+
+        function getRecommendations(predictedClass, confidence) {
+            const baseText = `For "${predictedClass}" classification with ${confidence.toFixed(1)}% confidence:\n\n`;
+            
+            switch(predictedClass) {
+                case 'Cavities':
+                    return baseText + '1) Schedule dental appointment immediately, 2) Cavity restoration/filling required, 3) Consider fluoride treatment, 4) Improve oral hygiene routine, 5) Regular dental checkups.';
+                case 'Fillings':
+                    return baseText + '1) Monitor filling integrity regularly, 2) Schedule routine dental checkup, 3) Watch for sensitivity or pain, 4) Consider replacement if deteriorated, 5) Maintain good oral hygiene.';
+                case 'Impacted_Teeth':
+                    return baseText + '1) Oral surgery consultation, 2) Evaluate extraction necessity, 3) Consider orthodontic treatment, 4) Pain management if symptomatic, 5) Monitor for complications.';
+                case 'Implants':
+                    return baseText + '1) Regular implant maintenance, 2) Professional cleaning schedule, 3) Monitor osseointegration, 4) Watch for signs of infection, 5) Long-term follow-up care.';
+                default:
+                    return baseText + 'Clinical correlation and dental specialist review recommended.';
+            }
+        }
+
+        function getDifferentialDiagnosis(predictedClass, probabilities) {
+            const classes = ['Cavities', 'Fillings', 'Impacted_Teeth', 'Implants'];
+            let alternatives = [];
+            
+            classes.forEach((className, index) => {
+                if (className !== predictedClass && probabilities[index] > 0.1) {
+                    alternatives.push(`${className.replace('_', ' ')} (${(probabilities[index] * 100).toFixed(1)}%)`);
+                }
+            });
+            
+            if (alternatives.length === 0) {
+                return `The model strongly favors "${predictedClass}" classification. Other conditions have very low probabilities.`;
+            }
+            
+            return `While "${predictedClass}" is the primary classification, differential diagnosis should consider: ${alternatives.join(', ')}. Clinical correlation is essential for definitive diagnosis.`;
+        }
+
+        function downloadReport() {
+            if (!lastPredictionResult) {
+                alert('Please analyze an image first before downloading the report.');
+                return;
+            }
+
+            const reportText = document.getElementById('reportText').value;
+            const blob = new Blob([reportText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dental_analysis_report_${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set original filter as active
+            document.querySelector('[data-filter="original"]').classList.add('active');
+            
+            // Check API status on load and periodically
+            checkApiStatus();
+            setInterval(checkApiStatus, 30000); // Check every 30 seconds
+        });
+    </script>
+</body>
+</html>
