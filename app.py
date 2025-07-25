@@ -4,6 +4,7 @@
 import os
 import io
 import logging
+import traceback  # Added for detailed error logging
 import numpy as np
 from PIL import Image
 import cv2
@@ -26,18 +27,20 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize Flask App
-# The template_folder is set to 'templates' by default, which matches your structure.
 app = Flask(__name__)
-CORS(app)  # Enable Cross-Origin Resource Sharing for all routes
+CORS(app)
 
 # ==============================================================================
 # MODEL PATHS & CONFIGURATIONS
 # ==============================================================================
-# --- Model File Paths (Using Original Absolute Paths as Requested) ---
-CHEST_MODEL_PATH = r"C:\Users\USER\Downloads\YZTA-Bootcamp-AI-83\X-Ray_Workbench_AI\Models\model.h5"
-FRACTURE_BINARY_MODEL_PATH = r"C:\Users\USER\Downloads\YZTA-Bootcamp-AI-83\X-Ray_Workbench_AI\Models\fracture_classification_model.h5"
-FRACTURE_MULTICLASS_MODEL_PATH = r"C:\Users\USER\Downloads\YZTA-Bootcamp-AI-83\X-Ray_Workbench_AI\Models\fracture_classification_CNN.h5"
-DENTAL_YOLO_MODEL_PATH = r"C:\Users\USER\Downloads\YZTA-Bootcamp-AI-83\X-Ray_Workbench_AI\Models\best.pt"
+# --- Corrected Relative Paths for Deployment ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODELS_DIR = os.path.join(BASE_DIR, 'Models')
+
+CHEST_MODEL_PATH = os.path.join(MODELS_DIR, 'model.h5')
+FRACTURE_BINARY_MODEL_PATH = os.path.join(MODELS_DIR, 'fracture_classification_model.h5')
+FRACTURE_MULTICLASS_MODEL_PATH = os.path.join(MODELS_DIR, 'fracture_classification_CNN.h5')
+DENTAL_YOLO_MODEL_PATH = os.path.join(MODELS_DIR, 'best.pt')
 
 
 # --- Model Configurations & Class Names ---
@@ -63,7 +66,7 @@ DENTAL_CONDITIONS = {
 chest_model = None
 fracture_binary_model = None
 fracture_multiclass_model = None
-fracture_binary_input_shape = None # Will be determined during model loading
+fracture_binary_input_shape = None
 dental_yolo_model = None
 
 # ==============================================================================
@@ -77,10 +80,11 @@ def load_chest_model():
         logger.info(f"Loading Chest X-Ray model from: {CHEST_MODEL_PATH}")
         chest_model = tf.keras.models.load_model(CHEST_MODEL_PATH, compile=False)
         logger.info("✓ Chest X-Ray model loaded successfully")
-        chest_model.summary()
+        chest_model.summary(print_fn=logger.info)
         return True
     except Exception as e:
-        logger.error(f"Error loading Chest X-Ray model: {e}", exc_info=True)
+        logger.error(f"Error loading Chest X-Ray model: {e}")
+        traceback.print_exc()  # Log the full error traceback
         return False
 
 def preprocess_chest_image(image):
@@ -113,7 +117,8 @@ def predict_chest_image(image):
             'class_names': CHEST_CLASS_NAMES
         }, None
     except Exception as e:
-        logger.error(f"Chest X-Ray prediction error: {e}", exc_info=True)
+        logger.error(f"Chest X-Ray prediction error: {e}")
+        traceback.print_exc()
         return None, f"Prediction error: {str(e)}"
 
 # ==============================================================================
@@ -123,7 +128,7 @@ def predict_chest_image(image):
 def create_fracture_binary_model():
     """Recreate binary model architecture if direct loading fails."""
     model = models.Sequential([
-        layers.InputLayer(input_shape=(180, 180, 3)), # Based on original code's expected shape
+        layers.InputLayer(input_shape=(180, 180, 3)),
         layers.Conv2D(32, (3, 3), activation='relu'), layers.MaxPooling2D((2, 2)),
         layers.Conv2D(64, (3, 3), activation='relu'), layers.MaxPooling2D((2, 2)),
         layers.Conv2D(128, (3, 3), activation='relu'), layers.MaxPooling2D((2, 2)),
@@ -165,7 +170,7 @@ def load_fracture_models():
     global fracture_binary_model, fracture_multiclass_model, fracture_binary_input_shape
     try:
         # Load Binary Model
-        logger.info("Loading binary fracture model...")
+        logger.info(f"Loading binary fracture model from {FRACTURE_BINARY_MODEL_PATH}")
         try:
             fracture_binary_model = keras.models.load_model(FRACTURE_BINARY_MODEL_PATH, compile=False)
         except Exception:
@@ -174,10 +179,10 @@ def load_fracture_models():
             fracture_binary_model.load_weights(FRACTURE_BINARY_MODEL_PATH)
         fracture_binary_input_shape = fracture_binary_model.input_shape[1:]
         logger.info(f"✓ Binary fracture model loaded. Input shape: {fracture_binary_input_shape}")
-        fracture_binary_model.summary()
+        fracture_binary_model.summary(print_fn=logger.info)
 
         # Load Multiclass Model
-        logger.info("Loading multiclass fracture model...")
+        logger.info(f"Loading multiclass fracture model from {FRACTURE_MULTICLASS_MODEL_PATH}")
         try:
             fracture_multiclass_model = keras.models.load_model(FRACTURE_MULTICLASS_MODEL_PATH, compile=False)
         except Exception:
@@ -185,10 +190,11 @@ def load_fracture_models():
             fracture_multiclass_model = create_fracture_multiclass_model()
             fracture_multiclass_model.load_weights(FRACTURE_MULTICLASS_MODEL_PATH)
         logger.info(f"✓ Multiclass fracture model loaded. Input shape: {FRACTURE_MULTICLASS_INPUT_SHAPE}")
-        fracture_multiclass_model.summary()
+        fracture_multiclass_model.summary(print_fn=logger.info)
         return True
     except Exception as e:
-        logger.error(f"Error loading fracture models: {e}", exc_info=True)
+        logger.error(f"Error loading fracture models: {e}")
+        traceback.print_exc()  # Log the full error traceback
         return False
 
 def preprocess_image_fracture(image, target_size):
@@ -212,7 +218,7 @@ def predict_fracture_binary(image):
     return {
         'prediction': predicted_class,
         'confidence': confidence,
-        'probabilities': [1 - probability, probability] # [Not Fractured, Fractured]
+        'probabilities': [1 - probability, probability]
     }
 
 def predict_fracture_type(image):
@@ -243,7 +249,8 @@ def load_dental_yolo_model():
         logger.info(f"YOLO model classes: {dental_yolo_model.names}")
         return True
     except Exception as e:
-        logger.error(f"Error loading YOLO model: {e}", exc_info=True)
+        logger.error(f"Error loading YOLO model: {e}")
+        traceback.print_exc()  # Log the full error traceback
         return False
 
 def preprocess_yolo_image(image):
@@ -273,12 +280,10 @@ def yolo_to_classification_summary(results):
             class_confidence_sums[class_id] += confidence
             class_counts[class_id] += 1
     
-    # Calculate probabilities based on detection confidence
     avg_confidences = [class_confidence_sums[i] / class_counts[i] if class_counts[i] > 0 else 0.0 for i in range(len(DENTAL_CONDITIONS))]
     total_avg_conf = sum(avg_confidences)
     probabilities = [c / total_avg_conf if total_avg_conf > 0 else 0 for c in avg_confidences]
 
-    # The "main" prediction is the class with the highest total confidence
     if not detections:
         predicted_class = "No Detections"
         confidence = 100.0
@@ -299,24 +304,20 @@ def yolo_to_classification_summary(results):
 # ==============================================================================
 @app.route('/')
 def route_index():
-    """Renders the main page for Chest X-Ray analysis."""
     return render_template('index.html')
 
 @app.route('/bone-fracture')
 def route_page2():
-    """Renders the page for Bone Fracture analysis."""
     return render_template('page2.html')
 
 @app.route('/dental')
 def route_page3():
-    """Renders the page for Dental X-Ray analysis."""
     return render_template('page3.html')
     
 # ==============================================================================
 # FLASK API ENDPOINTS
 # ==============================================================================
 
-# --- Generic Health Check ---
 @app.route("/health", methods=['GET'])
 def health_check():
     return jsonify({
@@ -329,7 +330,6 @@ def health_check():
         }
     })
 
-# --- Chest X-Ray API Endpoints ---
 @app.route('/chest/predict', methods=['POST'])
 def predict_chest_endpoint():
     if 'image' not in request.files:
@@ -342,10 +342,10 @@ def predict_chest_endpoint():
             return jsonify({'error': error}), 500
         return jsonify(result)
     except Exception as e:
-        logger.error(f"Error in /chest/predict endpoint: {e}", exc_info=True)
+        logger.error(f"Error in /chest/predict endpoint: {e}")
+        traceback.print_exc()
         return jsonify({'error': 'Failed to process image'}), 400
 
-# --- Bone Fracture API Endpoints ---
 @app.route('/fracture/predict', methods=['POST'])
 def predict_fracture_endpoint():
     if 'image' not in request.files:
@@ -354,11 +354,9 @@ def predict_fracture_endpoint():
     try:
         image = Image.open(io.BytesIO(file.read()))
         
-        # Stage 1: Binary prediction
         binary_result = predict_fracture_binary(image)
         response = {'stage1_prediction': binary_result}
         
-        # Stage 2: Multiclass prediction (if fractured)
         if binary_result['prediction'] == 'Fractured':
             multiclass_result = predict_fracture_type(image)
             response['stage2_prediction'] = multiclass_result
@@ -367,10 +365,10 @@ def predict_fracture_endpoint():
             
         return jsonify(response)
     except Exception as e:
-        logger.error(f"Error in /fracture/predict endpoint: {e}", exc_info=True)
+        logger.error(f"Error in /fracture/predict endpoint: {e}")
+        traceback.print_exc()
         return jsonify({'error': 'Failed to process image'}), 400
 
-# --- Dental YOLO API Endpoints ---
 @app.route('/dental/predict', methods=['POST'])
 def predict_dental_endpoint():
     if 'image' not in request.files:
@@ -380,12 +378,10 @@ def predict_dental_endpoint():
         image = Image.open(io.BytesIO(file.read()))
         processed_image = preprocess_yolo_image(image)
         
-        # Run YOLO prediction
         results = dental_yolo_model.predict(processed_image, verbose=False)
         if not results:
             return jsonify({'error': 'Model returned no results'}), 500
         
-        # Convert detection to a classification-style summary for the UI
         summary = yolo_to_classification_summary(results[0])
         
         return jsonify({
@@ -398,7 +394,8 @@ def predict_dental_endpoint():
             }
         })
     except Exception as e:
-        logger.error(f"Error in /dental/predict endpoint: {e}", exc_info=True)
+        logger.error(f"Error in /dental/predict endpoint: {e}")
+        traceback.print_exc()
         return jsonify({'error': 'Failed to process image'}), 400
 
 # ==============================================================================
@@ -406,33 +403,15 @@ def predict_dental_endpoint():
 # ==============================================================================
 if __name__ == '__main__':
     logger.info("Starting X-Ray Workbench AI Server...")
-    logger.info(f"TensorFlow Version: {tf.__version__}")
-    logger.info(f"PyTorch Version: {torch.__version__}")
     
-    # Check for GPU
-    gpus = tf.config.experimental.list_physical_devices('GPU')
-    if gpus:
-        logger.info(f"TensorFlow found {len(gpus)} GPU(s): {gpus}")
-    else:
-        logger.info("TensorFlow is running on CPU.")
-    
-    if torch.cuda.is_available():
-        logger.info(f"PyTorch found GPU: {torch.cuda.get_device_name(0)}")
-    else:
-        logger.info("PyTorch is running on CPU.")
-    
-    # Load all models
+    # Load all models at startup
     logger.info("\n--- Loading AI Models ---")
     load_chest_model()
     load_fracture_models()
     load_dental_yolo_model()
     logger.info("--- Model Loading Complete ---\n")
     
-    logger.info("Server is ready and running at http://0.0.0.0:5000")
-    logger.info("Access pages at:")
-    logger.info(" -> Chest X-Ray: http://127.0.0.1:5000/")
-    logger.info(" -> Bone Fracture: http://127.0.0.1:5000/bone-fracture")
-    logger.info(" -> Dental X-Ray: http://127.0.0.1:5000/dental")
-    
-    # Set debug=False for production use
+    logger.info("Starting Flask development server...")
+    # This app.run() is for local development only.
+    # A production server like Gunicorn will be used for deployment.
     app.run(host='0.0.0.0', port=5000, debug=True)
