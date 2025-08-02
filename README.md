@@ -7,24 +7,94 @@
 
 | İsim | Rol                 |  Sosyal Medya                                                                          |
 | :------- | :--------------------------------------- | :--------------- |
-| Esra Cesur | Product Owner     | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)](https://github.com/EsraCesur4)  |
+| Esra Cesur | Product Owner, Developer     | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)](https://github.com/EsraCesur4)  |
 | İclal Karahisar         |   Scrum Master    |  [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)](https://github.com/iclal02)  |
 | Atakan Emir Çaldağ    | Developer        |   [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)](https://github.com/atakancaldag)   |
 | Emir Can İpsalalı       | Developer        | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)](https://github.com/emiripsalali) |
 
+---
+# Ürün İsmi: 🩻 MedScan AI - Medical Imaging Analysis Suite
 
+<img width="1536" height="613" alt="MedScan_AI_glow" src="https://github.com/user-attachments/assets/f656625e-a6a5-434d-9d1f-07482b1ce90b" />
+
+---
+
+### Ürün Linki: [MedScan AI](https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench) : https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench
 
 ---
 
 # Ürün Açıklaması
 
-Bu proje, radyolojik görüntüler üzerinden semptom ve anomali bölgelerini otomatik olarak algılayıp görselleştiren, ardından tespit edilen bulguları doğrudan tıbbi rapora dönüştüren entegre bir yapay zeka destekli tanı ve karar destek sistemidir. Sistem, radyolojik görüntülerdeki hastalıkla ilişkili alanları öne çıkararak doktorların dikkatini kritik bölgelere yöneltecek, böylece yoğun iş yükü ve dikkat dağınıklığı gibi nedenlerle gözden kaçabilecek önemli bulguların fark edilmesini kolaylaştıracaktır.
+Bu proje, radyolojik görüntüler üzerinden hastalık sınıflandırması ve dental anomali bölgelerini otomatik olarak tespit eden, ardından bulgularını doğrudan tıbbi rapora dönüştüren entegre bir yapay zeka destekli tanı ve karar destek sistemidir. Sistem, göğüs X-ray, kemik kırığı ve göz hastalıkları için sınıflandırma analizi yaparken, dental X-ray görüntülerinde anomali bölgelerini tespit ederek doktorların dikkatini kritik alanlara yöneltir.
 
-Modelin tespit ettiği bulgular otomatik olarak raporlanacak ve manuel raporlama ihtiyacını ortadan kaldırarak zaman tasarrufu ve rapor standardizasyonu sağlanacaktır. Ayrıca, LLM tabanlı bir asistan, doktorlara alternatif teşhis olasılıkları, hasta yönlendirmeleri ve tedavi seçenekleri hakkında ikinci görüş sunarak karar alma süreçlerine yardımcı olacaktır. Bu sistem, doktorun nihai kararını destekleyen, ikinci görüş sunan bir araç olarak konumlandırılmıştır.
+Modelin tespit ettiği bulgular otomatik olarak raporlanacak ve manuel raporlama ihtiyacını ortadan kaldırarak zaman tasarrufu ve rapor standardizasyonu sağlanacaktır. Ayrıca, LLM tabanlı bir asistan (Gemini), doktorlara alternatif teşhis olasılıkları, hasta yönlendirmeleri ve tedavi seçenekleri hakkında ikinci görüş sunarak karar alma süreçlerine yardımcı olacaktır. Bu sistem, doktorun nihai kararını destekleyen, ikinci görüş sunan bir araç olarak konumlandırılmıştır.
 
+<details>
+  <summary><h1>Ürün Özellikleri</h1></summary>
+  
+# 🩻 MedScan AI - Medical Imaging Analysis Suite
+
+## 🫁 Göğüs X-Ray Analizi
+
+- **4-Sınıf CNN Modeli**: `Normal`, `COVID-19`, `Pneumonia`, `Tuberculosis`
+- **Sınıflandırma**: Hastalık türü belirleme
+- **Görüntü Filtreleri**: `Original`, `Negative`, `Green Channel`, `CLAHE`
+
+---
+
+## 🦴 Kemik Kırığı Tespiti
+
+- **2-Aşamalı Sistem**:
+  - Aşama 1: Binary Classification (`Fractured / Not Fractured`) 
+  - Aşama 2: Multi-class Fracture Typing 
+- **10 Kırık Türü**:
+  - `Avulsion`, `Comminuted`, `Fracture Dislocation`, `Greenstick`, `Hairline`,  
+    `Impacted`, `Longitudinal`, `Oblique`, `Pathological`, `Spiral`
+- **Sınıflandırma**: Kırık varlığı ve türü belirleme
+
+---
+
+## 🦷 Dental X-Ray Analizi
+
+- **YOLOv8 Object Detection**:
+  - `Cavities`, `Fillings`, `Impacted_Teeth`, `Implants`
+- **Bounding Box Visualization**: Anomali bölgelerinin işaretlenmesi
+- **Çoklu Tespit**: Tek görüntüde birden fazla dental problemin konumsal tespiti
+- **Anomali Lokalizasyonu**: Dental sorunların görüntü üzerinde gösterimi
+
+---
+
+## 👁️‍🗨️ Göz Fundus Analizi
+
+- **5-Sınıf EfficientNetB3 Modeli**:
+  - `ARMD`, `Cataract`, `Diabetic Retinopathy`, `Glaucoma`, `Normal`
+- **Sınıflandırma**: Retinal hastalık türü belirleme
+
+---
+
+## 🤖 Gemini AI Entegrasyonu
+
+- **Medical Assistant**: Analiz sonuçlarına dair etkileşimli soru-cevap
+- **Contextual Analysis**: Bulguların tıbbi olarak yorumlanması
+- **Treatment Recommendations**: Tedavi ve yönlendirme önerileri
+
+---
+
+## 🧑‍💻 Gelişmiş Kullanıcı Arayüzü
+
+- **Otomatik Rapor Üretimi**: Tıbbi analiz sonrası otomatik metin oluşturma
+- **Zoom & Pan**: `0.5x` – `3x` görsellerde yakınlaştırma ve kaydırma desteği
+- **Drag & Drop Upload**: Görüntü yüklemeyi kolaylaştıran sistem
+- **Responsive Design**: Mobil ve masaüstü uyumlu arayüz
+- **Login**: Doktor girişi ve oturum yönetimi
+- **PDF Export**: Otomatik raporların PDF formatında dışa aktarımı
+
+  
+</details>
 
 ## Ana Hedefler:
 
+- **Otomatik Hastalık Sınıflandırma:** Radyolojik görüntülerdeki hastalık tanılarının başarıyla gerçekleştirilmesi
 - **Otomatik Anomali Tespiti:** Radyolojik görüntülerdeki hastalıkla ilişkili bölgeleri otomatik olarak tespit etme
 - **Görsel Rehberlik:** Tespit edilen bölgelerin görüntüler üzerinde görselleştirilmesi ile kritik bulgulara dikkat çekme 
 - **Akıllı Raporlama:** Tespitleri anlamlı ve detaylı tıbbi raporlara dönüştürme
@@ -68,9 +138,9 @@ Modelin tespit ettiği bulgular otomatik olarak raporlanacak ve manuel raporlama
 
 
 ---
-
-
-#  Sprint 1
+# Sprint Yol Haritası
+<details>
+  <summary><h2>Sprint 1</h2></summary>
 
 ## Sprint Notları
 Sprint süresince yapılması planlanan görevler backlog içerisine tanımlanmıştır.  
@@ -148,10 +218,11 @@ belirli bir formatla gruba aktarılmıştır.
 - Toplantı zamanları belirlendi.  
 - Takım içi görev dağılımları yapıldı.
 
+</details>
 
----
 
-#  Sprint 2
+<details>
+  <summary><h2>Sprint 2</h2></summary>
 
 ## Sprint Notları
 Sprint 2 kapsamında model geliştirme çalışmaları devam ettirilmiş, görselleştirme ve göğüs X-ray görüntülerinin sınıflandırılması yapılmıştır.  
@@ -223,9 +294,12 @@ Günlük scrum toplantılarımız **WhatsApp grubu üzerinden yazılı olarak** 
 - Görselleştirme çıktıları, model doğruluğuyla tutarlı şekilde başarılı sonuçlar verdi.  
 - Bir sonraki sprintte sistem entegrasyonu ve demo yayınına ağırlık verilecek.
 
----
+</details>
 
-## Sprint 3 Notları
+
+<details>
+  <summary><h2>Sprint 3</h2></summary>
+
 
 Sprint 3 kapsamında sistemin kapsamı genişletilerek sadece göğüs röntgeni değil, **diş** ve **kemik** gibi farklı anatomik bölgeler için de analiz yapılabilecek şekilde altyapı güncellenmiştir.  
 Ayrıca, uygulamanın erişilebilirliğini artırmak amacıyla bir **canlı demo Hugging Face üzerinde** yayınlanmıştır.
@@ -276,3 +350,9 @@ Uygulama halen geliştirilmeye devam etmekte olup; eksik yönleri giderilerek i�
 
  **Gogus xray goruntuleme ve raporlama**  
 ![Bone_Detection](Documentation/image/light_dashboard.png)
+
+</details>
+
+# Proje Dökümanı
+
+# Kullanılan Teknolojiler
