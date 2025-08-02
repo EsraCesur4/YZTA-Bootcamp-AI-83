@@ -30,7 +30,7 @@ Bu proje, radyolojik görüntüler üzerinden hastalık sınıflandırması ve d
 Modelin tespit ettiği bulgular otomatik olarak raporlanacak ve manuel raporlama ihtiyacını ortadan kaldırarak zaman tasarrufu ve rapor standardizasyonu sağlanacaktır. Ayrıca, LLM tabanlı bir asistan (Gemini), doktorlara alternatif teşhis olasılıkları, hasta yönlendirmeleri ve tedavi seçenekleri hakkında ikinci görüş sunarak karar alma süreçlerine yardımcı olacaktır. Bu sistem, doktorun nihai kararını destekleyen, ikinci görüş sunan bir araç olarak konumlandırılmıştır.
 
 <details>
-  <summary><h1>Ürün Özellikleri</h1></summary>
+  <summary><h2>Ürün Özellikleri</h2></summary>
   
 # 🩻 MedScan AI - Medical Imaging Analysis Suite
 
