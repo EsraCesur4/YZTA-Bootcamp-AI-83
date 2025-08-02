@@ -428,3 +428,7 @@ Uygulama halen geliştirilmeye devam etmekte olup; eksik yönleri giderilerek i�
 - **Çalışma Ortamı**: Python `v3.9+`
 - **Bağımlılıklar**: Optimize edilmiş `requirements.txt`
 </details>
+
+
+<img width="3908" height="988" alt="medscan_qr_page" src="https://github.com/user-attachments/assets/17deaa4a-63ce-48f1-bae0-240eb5479b9a" />
+
