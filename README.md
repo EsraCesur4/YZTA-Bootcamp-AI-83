@@ -310,15 +310,32 @@ Frontend'de kullanıcı deneyimini iyileştiren tasarım değişiklikleri yapıl
 Günlük scrum toplantılarımız yine **WhatsApp grubu üzerinden yazılı olarak** gerçekleştirilmiştir.
 
 ## Ürün Durumu (Ekran Görüntüleri)
+---
+📍 **Göğüs X-Ray Sınıflandırma Sonucu:**
+
+| Tahmin Öncesi | Tahmin Sonrası |
+|----------------------|---------------------|
+| <img src="https://github.com/user-attachments/assets/bf5cc43d-7dd8-4f41-8c89-659de94bed1a" width="400"/> | <img src="Documentation/predicted/chest.png" width="400"/> |
+
+
+---
 
 📍 **Goz Hastaliklari Siniflandirma Sonucu:**  
-![Live_UI_Anatomy](Documentation/image/ocular_disease.png)
+| Tahmin Öncesi | Tahmin Sonrası |
+|----------------------|---------------------|
+| <img src="Documentation/image/ocular_disease.png" width="400"/> | <img src="Documentation/predicted/ocular.png" width="400"/> |
+
 
 📍 **Diş Görüntüsü Sınıflandırma Sonucu:**  
-![Dental_Detection](Documentation/image/dental_xray.png)
+| Tahmin Öncesi | Tahmin Sonrası |
+|----------------------|---------------------|
+| <img src="Documentation/image/dental_xray.png" width="400"/> | <img src="Documentation/predicted/dental.png" width="400"/> |
+
 
 📍 **Kemik Anomali Görselleştirmesi:**  
-![Bone_Detection](Documentation/image/bone_fracture.png)
+| Tahmin Öncesi | Tahmin Sonrası |
+|----------------------|---------------------|
+| <img src="Documentation/image/bone_fracture.png" width="400"/> | <img src="Documentation/predicted/bone_fracture.png" width="400"/> |
 
 📍 **Canlı Demo Hugging Face:**  
 Uygulama, daha geniş kullanıcı kitlesinin test edebilmesi amacıyla Hugging Face üzerinde canlıya alınmıştır:  
