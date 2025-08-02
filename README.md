@@ -357,8 +357,8 @@ Uygulama halen geliştirilmeye devam etmekte olup; eksik yönleri giderilerek i�
 
 <details>
   <summary><h2>Kullanılan Teknolojiler</h2></summary>
-### Backend
 
+### Backend
 - **Framework**: Flask `v2.3.3`
 - **AI/ML Kütüphaneleri**:
   - TensorFlow `v2.13.0`
@@ -369,14 +369,12 @@ Uygulama halen geliştirilmeye devam etmekte olup; eksik yönleri giderilerek i�
 - **LLM Entegrasyonu**: Google Gemini AI
 
 ### Frontend
-  
 - **Template Engine**: Jinja2 + modern CSS
 - **JavaScript**: Vanilla JS (ES6+)
 - **PDF Oluşturma**: `html2pdf.js` ile PDF çıktısı
 - **Responsive Tasarım**: Mobil öncelikli (mobile-first) yaklaşım
 
 ### Yayınlama & Ortam
-
 - **Platform**: Hugging Face Spaces (Online)
 - **Konteynerleştirme**: Docker uyumlu yapı
 - **Çalışma Ortamı**: Python `v3.9+`
