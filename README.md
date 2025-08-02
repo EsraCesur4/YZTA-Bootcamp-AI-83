@@ -5,13 +5,12 @@
 # Takım Üyeleri
 
 
-| İsim | Rol                 |  Sosyal Medya                                                                          |
-| :------- | :--------------------------------------- | :--------------- |
-| Esra Cesur | Product Owner, Developer     | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)](https://github.com/EsraCesur4)  |
-| İclal Karahisar         |   Scrum Master    |  [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)](https://github.com/iclal02)  |
-| Atakan Emir Çaldağ    | Developer        |   [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)](https://github.com/atakancaldag)   |
-| Emir Can İpsalalı       | Developer        | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)](https://github.com/emiripsalali) |
-
+|  | İsim | Rol | GitHub |
+|:--------:|:-----|:----|:-------|
+| <img src="https://avatars.githubusercontent.com/EsraCesur4?s=100" width="50"/> | **Esra Cesur** | Product Owner, Developer | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)](https://github.com/EsraCesur4) |
+| <img src="https://avatars.githubusercontent.com/iclal02?s=100" width="50"/> | **İclal Karahisar** | Scrum Master | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)](https://github.com/iclal02) |
+| <img src="https://avatars.githubusercontent.com/atakancaldag?s=100" width="50"/> | **Atakan Emir Çaldağ** | Developer | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)](https://github.com/atakancaldag) |
+| <img src="https://avatars.githubusercontent.com/emiripsalali?s=100" width="50"/> | **Emir Can İpsalalı** | Developer | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)](https://github.com/emiripsalali) |
 ---
 # Ürün İsmi: 🩻 MedScan AI - Medical Imaging Analysis Suite
 
