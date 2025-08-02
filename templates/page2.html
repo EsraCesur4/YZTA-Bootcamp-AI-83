@@ -1,10 +1,378 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radiology AI - Bone Fracture Analysis</title>
+    <title>MedScan AI - Bone Fracture Analysis</title>
     <style>
+        /* Image container with zoom capabilities */
+        .image-container {
+            position: relative;
+            max-width: 100%;
+            max-height: 400px;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background: #000;
+            cursor: grab;
+        }
+
+        .image-container.zoomed {
+            cursor: move;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 10px;
+            transition: transform 0.3s ease;
+            transform-origin: center center;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+        }
+
+        /* Updated image controls - simplified */
+        .image-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: none;
+            gap: 5px;
+            flex-direction: column;
+        }
+
+        .upload-area.has-image .image-controls {
+            display: flex;
+        }
+
+        .control-btn {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .control-btn:hover {
+            background: rgba(0, 212, 255, 0.8);
+            border-color: #00d4ff;
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .zoom-btn {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .zoom-btn:hover {
+            background: rgba(0, 212, 255, 0.8);
+            border-color: #00d4ff;
+        }
+
+        .zoom-btn:disabled {
+            background: rgba(0, 0, 0, 0.4);
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .delete-btn {
+            background: rgba(239, 68, 68, 0.8);
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.9);
+        }
+
+        /* Zoom level indicator */
+        .zoom-indicator {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00d4ff;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            display: none;
+        }
+
+        .image-container.zoomed .zoom-indicator {
+            display: block;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .image-controls {
+                position: relative;
+                top: auto;
+                right: auto;
+                flex-direction: row;
+                justify-content: center;
+                margin-top: 10px;
+            }
+            
+            .zoom-indicator {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+        }
+        /* Modify existing header to use flexbox layout */
+        .header {
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            gap: 40px;
+        }
+
+        .header-title {
+            flex: 0 0 auto;
+        }
+
+        .header-title h1 {
+            font-size: 28px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            color: #00d4ff;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+            margin: 0;
+            margin-bottom: 5px;
+        }
+
+        .header-title .subtitle {
+            font-size: 14px;
+            color: #888;
+        }
+
+        /* Header Navigation Styles */
+        .header-navigation {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 0 0 auto;
+        }
+
+        .header-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 18px;
+            background: linear-gradient(135deg, rgba(40, 40, 40, 0.6) 0%, rgba(50, 50, 50, 0.6) 100%);
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            text-decoration: none;
+            color: #ffffff;
+            font-weight: 500;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            justify-content: center;
+        }
+
+        .header-nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);
+            transition: left 0.4s ease;
+        }
+
+        .header-nav-link:hover::before {
+            left: 100%;
+        }
+
+        .header-nav-link:hover {
+            transform: translateY(-2px);
+            border-color: rgba(0, 212, 255, 0.6);
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 150, 200, 0.15) 100%);
+            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.25);
+        }
+
+        /* Active Navigation Link */
+        .header-nav-link.active {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.25) 0%, rgba(0, 150, 200, 0.25) 100%);
+            border-color: #00d4ff;
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .header-nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #00d4ff, #0099cc);
+            border-radius: 1px 1px 0 0;
+        }
+
+        /* Navigation Icons and Text */
+        .header-nav-link .nav-icon {
+            font-size: 18px;
+            filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.3));
+        }
+
+        .header-nav-link .nav-text {
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        /* Status indicator adjustments */
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-online { background-color: #22c55e; }
+        .status-offline { background-color: #ef4444; }
+        .status-loading { background-color: #f59e0b; animation: pulse 2s infinite; }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .header {
+                padding: 20px 30px;
+            }
+            
+            .header-content {
+                gap: 30px;
+            }
+            
+            .header-navigation {
+                gap: 8px;
+            }
+            
+            .header-nav-link {
+                padding: 10px 14px;
+                min-width: 110px;
+                font-size: 14px;
+            }
+            
+            .header-nav-link .nav-icon {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .header-navigation {
+                justify-content: center;
+                width: 100%;
+                gap: 6px;
+            }
+            
+            .header-nav-link {
+                flex: 1;
+                max-width: 120px;
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                padding: 15px 20px;
+            }
+            
+            .header-title h1 {
+                font-size: 24px;
+            }
+            
+            .header-navigation {
+                gap: 4px;
+            }
+            
+            .header-nav-link {
+                flex-direction: column;
+                padding: 8px;
+                gap: 4px;
+                min-width: 80px;
+                max-width: 90px;
+            }
+            
+            .header-nav-link .nav-text {
+                font-size: 11px;
+                line-height: 1.2;
+                text-align: center;
+            }
+            
+            .header-nav-link .nav-icon {
+                font-size: 18px;
+            }
+        }
+
+        /* Enhanced hover effects */
+        .chest-nav:hover {
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.2);
+        }
+
+        .fracture-nav:hover {
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.2);
+        }
+
+        .ocular-nav:hover {
+
+            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.2);
+
+        }
+
+        .dental-nav:hover {
+            box-shadow: 0 6px 20px rgba(156, 39, 176, 0.2);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
         * {
             margin: 0;
             padding: 0;
@@ -463,14 +831,278 @@
         .severity-mild { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
         .severity-moderate { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
         .severity-severe { background: rgba(156, 39, 176, 0.2); color: #9c27b0; }
+
+.report-btn {
+    display: none;
+}
+
+/* Report status styling */
+#reportStatus.generating {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #f59e0b;
+}
+
+#reportStatus.success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+}
+
+#reportStatus.error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+/* Assistant status styling */
+.assistant-status {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 15px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ef4444;
+    animation: pulse 2s infinite;
+}
+
+.status-dot.online {
+    background-color: #22c55e;
+}
+
+.status-dot.loading {
+    background-color: #f59e0b;
+}
+
+/* Enhanced AI input styling */
+.ai-input {
+    width: 100%;
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 16px;
+    margin-bottom: 0;
+}
+
+.ai-input:focus {
+    outline: none;
+    border-color: #9c27b0;
+    box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.2);
+}
+
+/* Ask Button Enhanced */
+.ask-btn {
+    background: linear-gradient(135deg, #00d4ff 0%, #00d4ff 100%);
+    color: #000000;
+    border: none;
+    padding: 15px 25px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 100px;
+    font-size: 16px;
+}
+
+.ask-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(39, 160, 176, 0.6);
+}
+
+.ask-btn:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    color: #888;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.ask-btn.loading {
+    background: rgba(245, 158, 11, 0.8);
+    color: #000;
+}
+
+.ask-btn.loading::after {
+    content: ' ⏳';
+}
+
+/* Quick Question Buttons Enhanced */
+.quick-question-btn {
+    background: rgba(39, 171, 176, 0.2);
+    border: 1px solid rgba(39, 160, 176, 0.6);
+    color: #00d4ff;
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.quick-question-btn:hover {
+    background: rgba(39, 171, 176, 0.2);
+    border-color: rgba(39, 160, 176, 0.6);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.quick-question-btn:disabled {
+    background: rgba(255, 255, 255, 0.05);
+    color: #666;
+    cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Conversation History Styling */
+.conversation-history {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    display: none;
+}
+
+.conversation-history.has-messages {
+    display: block;
+}
+
+.conversation-message {
+    margin-bottom: 15px;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.conversation-message.user {
+    background: rgba(0, 212, 255, 0.1);
+    border-left: 3px solid #00d4ff;
+}
+
+.conversation-message.assistant {
+    background: rgba(156, 39, 176, 0.1);
+    border-left: 3px solid #9c27b0;
+}
+
+.conversation-message .message-header {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.conversation-message .message-content {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Enhanced AI Response */
+.ai-response {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 120px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Clear conversation button */
+.clear-conversation-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.6);
+}
+
+/* Loading states */
+.loading-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #f59e0b;
+    font-style: italic;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(245, 158, 11, 0.3);
+    border-radius: 50%;
+    border-top-color: #f59e0b;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .quick-questions {
+        gap: 6px;
+    }
+    
+    .quick-question-btn {
+        font-size: 10px;
+        padding: 6px 10px;
+    }
+    
+    .conversation-history {
+        max-height: 250px;
+    }
+}
+
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Radiology AI - Bone Fracture Analysis</h1>
-        <div class="subtitle">
-            <span class="status-indicator status-offline" id="apiStatus"></span>
-            <span id="apiStatusText">Connecting to AI Server...</span>
+        <div class="header-content">
+            <div class="header-title">
+                <h1>MedScan AI - Bone Fracture Analysis</h1>
+                <div class="subtitle">
+                    <span class="status-indicator status-offline" id="apiStatus"></span>
+                    <span id="apiStatusText">Connecting to AI Server...</span>
+                </div>
+            </div>
+            
+            <nav class="header-navigation">
+                <a href="/main" class="header-nav-link chest-nav active" data-page="chest">
+                    <span class="nav-icon">🫁</span>
+                    <span class="nav-text">Chest X-Ray</span>
+                </a>
+                
+                <a href="/bone-fracture" class="header-nav-link fracture-nav" data-page="fracture">
+                    <span class="nav-icon">🦴</span>
+                    <span class="nav-text">Bone Fracture</span>
+                </a>
+
+                <a href="/ocular" class="header-nav-link ocular-nav active" data-page="ocular">
+                    <span class="nav-icon">👁️</span>
+                    <span class="nav-text">Ocular Disease</span>
+                </a>
+                
+                <a href="/dental" class="header-nav-link dental-nav" data-page="dental">
+                    <span class="nav-icon">🦷</span>
+                    <span class="nav-text">Dental X-Ray</span>
+                </a>
+                
+                <!-- Add logout link -->
+                <a href="/logout" class="header-nav-link logout-nav" data-page="logout">
+                    <span class="nav-icon"></span>
+                    <span class="nav-text">Logout</span>
+                </a>
+            </nav>
         </div>
     </div>
 
@@ -485,7 +1117,6 @@
                 <input type="file" id="imageUpload" accept="image/*">
                 
                 <div class="image-controls">
-                    <button class="control-btn" onclick="changeImage()">📷 Change</button>
                     <button class="control-btn delete-btn" onclick="deleteImage()">🗑️ Delete</button>
                 </div>
             </div>
@@ -495,54 +1126,38 @@
                 <button class="enhancement-btn" data-filter="invert">Negative</button>
                 <button class="enhancement-btn" data-filter="green">Green Channel</button>
                 <button class="enhancement-btn" data-filter="clahe">CLAHE</button>
-                <button class="enhancement-btn" data-filter="heatmap">Heatmap</button>
             </div>
 
-            <div class="report-section">
-                <h3>Download Report</h3>
-                <button class="download-btn" id="downloadBtn" onclick="downloadReport()" disabled>📄 Generate & Download PDF Report</button>
-            </div>
+            <div class="report-section" style="margin-top: 30px;">
+    <h3>Medical Report</h3>
+    
+    <!-- Keep your existing reason of visit input -->
+    <div class="patient-info-section" style="margin-bottom: 15px;">
+        <label for="reasonOfVisit" style="color: #00d4ff; font-weight: 600; margin-bottom: 5px; display: block;">
+            Reason for Visit:
+        </label>
+        <input type="text" id="reasonOfVisit" placeholder="e.g., Routine examination, Broken Bone..." 
+            style="width: 100%; padding: 8px 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: #ffffff; font-size: 14px;">
+    </div>
+    
+    <!-- Enhanced buttons -->
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <button class="download-btn" id="generateReportBtn" onclick="generateEnhancedReport()" disabled
+                style="background: linear-gradient(135deg, #00d4ff 0%, #00d4ff 100%);">
+            🔄 Generate Enhanced Report
+        </button>
+        <button class="download-btn" id="downloadBtn" onclick="downloadEnhancedReport()" disabled>
+            📄 Download Report
+        </button>
+    </div>
+</div>
 
-            <div class="report-section">
-                <h3>Edit Report</h3>
-                <textarea class="report-textarea" id="reportText" placeholder="Analysis results will appear here after image upload...">
-BONE X-RAY FRACTURE ANALYSIS REPORT
-
-Date: ${new Date().toLocaleDateString()}
-Patient ID: [Patient ID]
-Study: Bone X-Ray Fracture Analysis
-
-AI MODEL ANALYSIS:
-Two-Stage Classification System:
-1. Fracture Detection: Binary classifier (Fractured/Not Fractured)
-2. Fracture Type Classification: 10-class fracture type classifier
-
-FRACTURE TYPES:
-- Avulsion fracture: Bone fragment pulled away by tendon/ligament
-- Comminuted fracture: Multiple bone fragments
-- Fracture Dislocation: Fracture with joint dislocation
-- Greenstick fracture: Incomplete fracture (common in children)
-- Hairline Fracture: Thin crack in bone
-- Impacted fracture: Bone ends driven into each other
-- Longitudinal fracture: Fracture along bone length
-- Oblique fracture: Diagonal fracture line
-- Pathological fracture: Due to disease/weakness
-- Spiral Fracture: Twisting injury fracture
-
-FINDINGS:
-Upload an image to generate AI analysis...
-
-CLASSIFICATION RESULTS:
-Awaiting image upload for classification.
-
-IMPRESSION:
-No analysis performed yet.
-
-AI Analysis Confidence: Pending
-Reviewed by: Two-Stage AI Fracture Detection System
-Requires: Radiologist verification and clinical correlation
-                </textarea>
-            </div>
+<!-- Keep your existing report textarea -->
+<div class="report-section">
+    <h3>View Report</h3>
+    <textarea class="report-textarea" id="reportText" placeholder="Enhanced report will appear here after generation...">
+    </textarea>
+</div>
         </div>
 
         <div class="right-panel">
@@ -567,22 +1182,96 @@ Requires: Radiologist verification and clinical correlation
             </div>
 
             <div class="prediction-confidence" id="predictionConfidence"></div>
+
+            
+        <div class="section-title" style="margin-top: 30px;" style="text-align: left;" >Gemini - AI Medical Assistant</div>
+        
+        <!-- Assistant Status -->
+        <div class="assistant-status" id="assistantStatus">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                <div class="status-dot" id="geminiStatusDot"></div>
+                <span id="geminiStatusText">Initializing Gemini AI...</span>
+            </div>
+        </div>
+        
+        <!-- Current Analysis Context -->
+        <div class="context-display" id="contextDisplay" style="background: rgba(0, 0, 0, 0.3); border-radius: 10px; padding: 15px; margin-bottom: 15px; font-size: 12px; color: #888; display: none;">
+            <strong style="color: #00d4ff;">🔍 Current Analysis Context:</strong>
+            <div id="contextContent"></div>
+        </div>
+        
+        <!-- Question Input -->
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <input type="text" class="ai-input" id="aiInput" placeholder="Ask Gemini about findings, diagnosis, treatment recommendations...">
+            <button class="ask-btn" onclick="askGeminiAssistant()" disabled id="askBtn">
+                Ask Gemini
+            </button>
+        </div>
+        
+        <!-- Quick Question Buttons -->
+        <div class="quick-questions" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
+            <button class="quick-question-btn" onclick="askQuickQuestion('What does this finding mean?')">
+                 Explain Finding
+            </button>
+            <button class="quick-question-btn" onclick="askQuickQuestion('What are the differential diagnoses?')">
+                 Differential Diagnosis
+            </button>
+            <button class="quick-question-btn" onclick="askQuickQuestion('What are the next steps?')">
+                 Next Steps
+            </button>
+            <button class="quick-question-btn" onclick="askQuickQuestion('Is this finding serious?')">
+                 Clinical Significance
+            </button>
+            <button class="quick-question-btn" onclick="askQuickQuestion('What follow-up is needed?')">
+                 Follow-up
+            </button>
+            <button class="quick-question-btn" onclick="askQuickQuestion('What additional tests should be considered?')">
+                 Additional Tests
+            </button>
+        </div>
+        
+        <!-- Conversation History -->
+        <div class="conversation-history" id="conversationHistory" style="max-height: 400px; overflow-y: auto; margin-bottom: 15px;">
+            <!-- Conversation will be populated here -->
+        </div>
+        
+        <!-- Initial Assistant Message -->
+        <div class="ai-response" id="aiResponse">
+            <div style="color: #888; font-style: italic; text-align: center; padding: 20px;">
+                <div style="font-size: 24px; margin-bottom: 10px;"></div>
+                <p><strong>Gemini AI Medical Assistant Ready</strong></p>
+                <p style="font-size: 12px; margin-top: 10px; line-height: 1.4;">
+                    Upload a medical image to get started, then ask me about:<br>
+                    •  <strong>Findings interpretation</strong> - What do the results mean?<br>
+                    •  <strong>Differential diagnosis</strong> - What else could it be?<br>
+                    •  <strong>Clinical recommendations</strong> - What should be done next?<br>
+                    •  <strong>Severity assessment</strong> - How serious is this?<br>
+                    •  <strong>Additional tests</strong> - What other tests are needed?<br>
+                    •  <strong>Follow-up care</strong> - When to re-evaluate?
+                </p>
+            </div>
+        </div>
+        
+        <!-- Clear Conversation Button -->
+        <div style="text-align: center; margin-top: 15px;">
+            <button class="clear-conversation-btn" onclick="clearConversation()" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                 Clear Conversation
+            </button>
+        </div>
+    
+
         </div>
     </div>
 
-    <div class="ai-assistant">
-        <div class="section-title">AI Assistant</div>
-        <input type="text" class="ai-input" id="aiInput" placeholder="Ask about the fracture findings, treatment recommendations, or clinical implications...">
-        <div class="ai-response" id="aiResponse">
-            <p style="color: #888; font-style: italic;">AI Assistant ready. Upload a bone X-ray image and ask questions about fracture detection, fracture types, treatment recommendations, or healing time estimates. The system uses two-stage classification: first detecting if a fracture is present, then classifying the specific fracture type.</p>
-        </div>
-    </div>
+    
 
     <script>
+    let conversationHistory = [];
+    let geminiEnabled = false;
     let currentImage = null;
     let currentFilter = 'original';
     let lastPredictionResult = null;
-    let apiBaseUrl = 'http://localhost:5000'; // Update this if your API is hosted elsewhere
+    let apiBaseUrl = ''; 
 
     // Fracture types mapping (used for the report)
     const fractureTypes = {
@@ -605,7 +1294,6 @@ Requires: Radiologist verification and clinical correlation
             const response = await fetch(`${apiBaseUrl}/health`, {
                 method: 'GET',
                 headers: { 'Accept': 'application/json' },
-                mode: 'cors'
             });
 
             if (!response.ok) {
@@ -660,7 +1348,6 @@ Requires: Radiologist verification and clinical correlation
         uploadArea.innerHTML = `
             <img src="${currentImage}" alt="Bone X-ray" class="image-preview" id="imagePreview">
             <div class="image-controls">
-                <button class="control-btn" onclick="changeImage()">📷 Change</button>
                 <button class="control-btn delete-btn" onclick="deleteImage()">🗑️ Delete</button>
             </div>
         `;
@@ -786,7 +1473,6 @@ Requires: Radiologist verification and clinical correlation`;
             case 'invert': filterStyle = 'invert(1)'; break;
             case 'green': filterStyle = 'sepia(1) saturate(5) hue-rotate(90deg)'; break;
             case 'clahe': filterStyle = 'contrast(1.5) brightness(1.2)'; break;
-            case 'heatmap': filterStyle = 'contrast(1.3) brightness(1.1) saturate(0) sepia(1) hue-rotate(0deg) saturate(3)'; break;
         }
         img.style.filter = filterStyle;
     }
@@ -807,8 +1493,6 @@ Requires: Radiologist verification and clinical correlation`;
             const formData = new FormData();
             formData.append('image', file);
 
-            // --- CHANGED ---
-            // This now points to the correct, specific endpoint for the fracture model.
             const endpoint = `${apiBaseUrl}/fracture/predict`;
             console.log(`Sending request to: ${endpoint}`);
             console.log(`File size: ${file.size} bytes`);
@@ -816,7 +1500,6 @@ Requires: Radiologist verification and clinical correlation`;
             const response = await fetch(endpoint, {
                 method: 'POST',
                 body: formData,
-                mode: 'cors'
             });
 
             console.log(`Response status: ${response.status}`);
@@ -852,10 +1535,8 @@ Requires: Radiologist verification and clinical correlation`;
 
         console.log('Display results:', result);
 
-        // --- CHANGED ---
-        // The API response is nested. We need to access the inner objects.
         const stage1 = result.stage1_prediction;
-        const stage2 = result.stage2_prediction; // This can be null
+        const stage2 = result.stage2_prediction; 
 
         const isFractured = stage1.prediction === 'Fractured';
         const stage1Confidence = stage1.confidence;
@@ -943,9 +1624,9 @@ Requires: Radiologist verification and clinical correlation`;
         } else {
             predictionConfidence.textContent = `Stage 1 Confidence: ${stage1Confidence.toFixed(1)}% - ${stage1.prediction}`;
         }
+        enableReportGeneration();
     }
 
-    // --- All functions below this point were already correct, but are included for completeness ---
     function updateReport(result) {
         const reportText = document.getElementById('reportText');
         const currentDate = new Date().toLocaleDateString();
@@ -1008,7 +1689,7 @@ Reviewed by: Two-Stage AI Fracture Detection System
 Requires: Radiologist verification and clinical correlation.
 
 DISCLAIMER: This AI analysis is for assistance only and should not replace professional medical judgment.`;
-        reportText.value = report;
+        
     }
 
     function showError(message) {
@@ -1019,19 +1700,166 @@ DISCLAIMER: This AI analysis is for assistance only and should not replace profe
         probabilityBars.innerHTML = `<div class="error-message"><strong>Analysis Error:</strong><br>${message}<br><br>Please check your internet connection and ensure the AI server is running.</div>`;
     }
 
-    document.getElementById('aiInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') handleAIQuery(); });
+    document.getElementById('aiInput').addEventListener('keypress', function(e) { 
+    if (e.key === 'Enter') askGeminiAssistant(); 
+});
 
-    function handleAIQuery() {
-        const input = document.getElementById('aiInput').value;
-        const response = document.getElementById('aiResponse');
-        if (!input.trim()) return;
-        response.innerHTML = '<div class="loading-spinner"></div><p style="color: #888;">Processing your query...</p>';
-        setTimeout(() => {
-            let aiResponse = generateContextualResponse(input, lastPredictionResult);
-            response.innerHTML = `<p>${aiResponse}</p>`;
-            document.getElementById('aiInput').value = '';
-        }, 1500);
+    async function askGeminiAssistant() {
+    if (!geminiEnabled) {
+        alert('Gemini AI requires an API key. Your medical image analysis above still works perfectly!');
+        return;
     }
+    
+    const aiInput = document.getElementById('aiInput');
+    const askBtn = document.getElementById('askBtn');
+    const aiResponse = document.getElementById('aiResponse');
+    
+    const question = aiInput.value.trim();
+    if (!question) return;
+    
+    // Show loading state
+    askBtn.disabled = true;
+    askBtn.classList.add('loading');
+    askBtn.textContent = 'Asking Gemini';
+    
+    // Add user message to conversation
+    addToConversation('user', question);
+    
+    try {
+        // Prepare context from current analysis
+        let context = '';
+        if (lastPredictionResult) {
+            context = JSON.stringify({
+                predicted_class: lastPredictionResult.predicted_class || lastPredictionResult.stage1_prediction?.prediction,
+                confidence: lastPredictionResult.confidence || lastPredictionResult.stage1_prediction?.confidence,
+                analysis_type: window.location.pathname.includes('chest') ? 'chest_xray' : 
+                             window.location.pathname.includes('fracture') ? 'bone_fracture' : 'dental_xray'
+            });
+        }
+        
+        const response = await fetch(`${apiBaseUrl}/ask-assistant`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                question: question,
+                context: context
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Add assistant response to conversation
+            addToConversation('assistant', data.response);
+            
+            // Clear input
+            aiInput.value = '';
+        } else {
+            throw new Error(data.error || 'Unknown error');
+        }
+        
+    } catch (error) {
+        console.error('Gemini assistant error:', error);
+        
+        // Add error message to conversation
+        addToConversation('assistant', `I apologize, but I encountered an error: ${error.message}. Please try again or check your connection.`);
+    } finally {
+        // Reset button state
+        askBtn.disabled = false;
+        askBtn.classList.remove('loading');
+        askBtn.textContent = 'Ask Gemini';
+    }
+}
+
+function askQuickQuestion(question) {
+    if (!geminiEnabled) {
+        alert('Gemini AI requires an API key. Your medical image analysis above still works perfectly!');
+        return;
+    }
+    
+    const aiInput = document.getElementById('aiInput');
+    aiInput.value = question;
+    askGeminiAssistant();
+}
+
+function addToConversation(role, message) {
+    const conversationHistory = document.getElementById('conversationHistory');
+    if (!conversationHistory) return;
+    
+    // Show conversation history
+    conversationHistory.classList.add('has-messages');
+    
+    // Create message element
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `conversation-message ${role}`;
+    
+    const timestamp = new Date().toLocaleTimeString();
+    const roleText = role === 'user' ? 'You' : 'Gemini AI';
+    
+    messageDiv.innerHTML = `
+        <div class="message-header">${roleText} - ${timestamp}</div>
+        <div class="message-content">${message}</div>
+    `;
+    
+    // Add to conversation
+    conversationHistory.appendChild(messageDiv);
+    
+    // Scroll to bottom
+    conversationHistory.scrollTop = conversationHistory.scrollHeight;
+    
+    // Limit conversation history to last 10 messages
+    const messages = conversationHistory.querySelectorAll('.conversation-message');
+    if (messages.length > 10) {
+        messages[0].remove();
+    }
+}
+
+function clearConversation() {
+    const conversationHistory = document.getElementById('conversationHistory');
+    if (conversationHistory) {
+        conversationHistory.innerHTML = '';
+        conversationHistory.classList.remove('has-messages');
+    }
+    
+    // Reset AI response to initial state if Gemini is enabled
+    if (geminiEnabled) {
+        updateGeminiUI(true);
+    }
+}
+
+async function generateAIReport() {
+    if (!geminiEnabled) {
+        alert('Gemini AI requires an API key for report generation.');
+        return;
+    }
+    
+    if (!lastPredictionResult) {
+        alert('Please analyze an image first before generating an AI report.');
+        return;
+    }
+    
+    console.log('AI report generation - Gemini integration coming soon');
+}
+
+async function analyzeWithGemini() {
+    if (!geminiEnabled) {
+        alert('Gemini AI requires an API key for image analysis.');
+        return;
+    }
+    
+    if (!currentImage) {
+        alert('Please upload an image first before analyzing with Gemini.');
+        return;
+    }
+    
+    console.log('Gemini image analysis - Integration coming soon');
+}
 
     function generateContextualResponse(query, predictionResult) {
         const q = query.toLowerCase();
@@ -1083,10 +1911,1240 @@ DISCLAIMER: This AI analysis is for assistance only and should not replace profe
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelector('[data-filter="original"]').classList.add('active');
-        checkApiStatus();
-        setInterval(checkApiStatus, 30000);
+    document.querySelector('[data-filter="original"]').classList.add('active');
+    checkApiStatus();
+    setInterval(checkApiStatus, 30000);
+    
+    // Add Gemini status check
+    initializeGeminiStatus();
+});
+
+async function initializeGeminiStatus() {
+    try {
+        // Check if Gemini is enabled via health endpoint
+        const response = await fetch(`${apiBaseUrl}/health`);
+        const data = await response.json();
+        
+        geminiEnabled = data.gemini_enabled || false;
+        
+        // Immediately update UI based on status
+        updateGeminiUI(geminiEnabled);
+        
+        console.log('Gemini status:', geminiEnabled ? 'Enabled' : 'Disabled (no API key)');
+        
+    } catch (error) {
+        console.error('Error checking Gemini status:', error);
+        updateGeminiUI(false);
+    }
+}
+
+function updateGeminiUI(enabled) {
+    const geminiStatusDot = document.getElementById('geminiStatusDot');
+    const geminiStatusText = document.getElementById('geminiStatusText');
+    const askBtn = document.getElementById('askBtn');
+    const aiInput = document.getElementById('aiInput');
+    const quickQuestionBtns = document.querySelectorAll('.quick-question-btn');
+    const aiResponse = document.getElementById('aiResponse');
+    
+    if (enabled) {
+        // Gemini is enabled
+        if (geminiStatusDot) {
+            geminiStatusDot.className = 'status-dot online';
+        }
+        if (geminiStatusText) {
+            geminiStatusText.textContent = 'Gemini AI Ready - Ask me anything about your medical images!';
+        }
+        if (askBtn) {
+            askBtn.disabled = false;
+        }
+        if (aiInput) {
+            aiInput.disabled = false;
+            aiInput.placeholder = 'Ask Gemini about findings, diagnosis, treatment recommendations...';
+        }
+        quickQuestionBtns.forEach(btn => {
+            btn.disabled = false;
+        });
+        
+        if (aiResponse) {
+            aiResponse.innerHTML = `
+                <div style="color: #888; font-style: italic; text-align: center; padding: 20px;">
+                    <div style="font-size: 24px; margin-bottom: 10px;"></div>
+                    <p><strong>Gemini AI Medical Assistant Ready</strong></p>
+                    <p style="font-size: 12px; margin-top: 10px; line-height: 1.4;">
+                        Upload a medical image to get started, then ask me about:<br>
+                        • <strong>Findings interpretation</strong> - What do the results mean?<br>
+                        • <strong>Differential diagnosis</strong> - What else could it be?<br>
+                        • <strong>Clinical recommendations</strong> - What should be done next?<br>
+                        • <strong>Severity assessment</strong> - How serious is this?<br>
+                        • <strong>Additional tests</strong> - What other tests are needed?<br>
+                        • <strong>Follow-up care</strong> - When to re-evaluate?
+                    </p>
+                </div>
+            `;
+        }
+    } else {
+        // Gemini is not configured - show disabled state
+        if (geminiStatusDot) {
+            geminiStatusDot.className = 'status-dot';
+            geminiStatusDot.style.backgroundColor = '#ef4444';
+        }
+        if (geminiStatusText) {
+            geminiStatusText.textContent = 'Gemini AI not configured - Medical analysis still works';
+        }
+        if (askBtn) {
+            askBtn.disabled = true;
+            askBtn.textContent = 'API Key Required';
+        }
+        if (aiInput) {
+            aiInput.disabled = true;
+            aiInput.placeholder = 'Gemini requires API key - Medical analysis still available above';
+        }
+        quickQuestionBtns.forEach(btn => {
+            btn.disabled = true;
+        });
+        
+        if (aiResponse) {
+            aiResponse.innerHTML = `
+                <div style="color: #888; font-style: italic; text-align: center; padding: 20px;">
+                    <div style="font-size: 24px; margin-bottom: 10px;">⚠️</div>
+                    <p><strong>Gemini AI Not Available</strong></p>
+                    <p style="font-size: 12px; margin-top: 10px; line-height: 1.4; color: #ffffff;">
+                        Gemini AI requires an API key to function.<br><br>
+                        <strong>Your medical image analysis still works perfectly!</strong><br>
+                        Upload images above to get AI-powered:<br>
+                        • Chest X-ray classification<br>
+                        • Bone fracture detection<br>
+                        • Dental anomaly detection<br><br>
+                        <small style="color: #666;">To enable Gemini: Add GEMINI_API_KEY environment variable</small>
+                    </p>
+                </div>
+            `;
+        }
+    }
+}
+    // Header Navigation functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeHeaderNavigation();
     });
+
+    function initializeHeaderNavigation() {
+        // Set active navigation based on current page
+        setActiveHeaderNavigation();
+        
+        // Add navigation event listeners
+        addHeaderNavigationListeners();
+        
+        // Update page title based on active navigation
+        updatePageTitle();
+    }
+
+    function setActiveHeaderNavigation() {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.header-nav-link');
+        
+        // Remove all active classes
+        navLinks.forEach(link => link.classList.remove('active'));
+        
+        // Set active based on current page
+        let activeLink = null;
+        let pageTitle = 'Medical Image Analysis';
+        
+        if (currentPath === '/' || currentPath.includes('index')) {
+            activeLink = document.querySelector('.chest-nav');
+            pageTitle = 'Chest X-Ray Analysis';
+        } else if (currentPath.includes('bone-fracture') || currentPath.includes('page2')) {
+            activeLink = document.querySelector('.fracture-nav');
+            pageTitle = 'Bone Fracture Analysis';
+        } else if (currentPath.includes('dental') || currentPath.includes('page3')) {
+            activeLink = document.querySelector('.dental-nav');
+            pageTitle = 'Dental X-Ray Analysis';
+        }
+        
+        if (activeLink) {
+            activeLink.classList.add('active');
+        }
+        
+        // Update the header title
+        const headerTitle = document.querySelector('.header-title h1');
+        if (headerTitle) {
+            headerTitle.textContent = `MedScan AI - ${pageTitle}`;
+        }
+    }
+
+    function addHeaderNavigationListeners() {
+        const navLinks = document.querySelectorAll('.header-nav-link');
+        
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                const analysisType = this.dataset.page;
+                console.log(`Header Navigation: User clicked ${analysisType} analysis`);
+                
+                // Add click feedback
+                this.style.transform = 'translateY(-2px) scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+            });
+        });
+    }
+
+    function updatePageTitle() {
+        // Update browser tab title based on active page
+        const activeLink = document.querySelector('.header-nav-link.active');
+        if (activeLink) {
+            const analysisType = activeLink.querySelector('.nav-text').textContent;
+            document.title = `MedScan AI - ${analysisType}`;
+        }
+    }
+
+    // Keyboard shortcuts for header navigation
+    document.addEventListener('keydown', function(e) {
+        // Ctrl + number keys for quick navigation
+        if (e.ctrlKey) {
+            const navLinks = document.querySelectorAll('.header-nav-link');
+            let targetLink = null;
+            
+            switch(e.key) {
+                case '1':
+                    targetLink = navLinks[0]; // Chest
+                    break;
+                case '2':
+                    targetLink = navLinks[1]; // Fracture
+                    break;
+                case '3':
+                    targetLink = navLinks[2]; // Dental
+                    break;
+            }
+            
+            if (targetLink) {
+                e.preventDefault();
+                window.location.href = targetLink.href;
+            }
+        }
+    });
+    // Simple zoom variables
+    let currentZoom = 1;
+    let minZoom = 0.5;
+    let maxZoom = 3;
+    let zoomStep = 0.25;
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let imagePosition = { x: 0, y: 0 };
+
+    // Updated displayImage function with zoom only
+    function displayImage() {
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.innerHTML = `
+            <div class="image-container" id="imageContainer">
+                <img src="${currentImage}" alt="X-ray" class="image-preview" id="imagePreview">
+                
+                <!-- Zoom level indicator -->
+                <div class="zoom-indicator" id="zoomIndicator">100%</div>
+            </div>
+            
+            <div class="image-controls">
+                <!-- Zoom controls -->
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoomInBtn" onclick="zoomIn()" title="Zoom In">+</button>
+                    <button class="zoom-btn" id="zoomOutBtn" onclick="zoomOut()" title="Zoom Out">−</button>
+                    <button class="zoom-btn" onclick="resetZoom()" title="Reset Zoom">⌂</button>
+                </div>
+                
+                <!-- Action buttons -->
+                <button class="control-btn delete-btn" onclick="deleteImage()">🗑️ Delete</button>
+            </div>
+        `;
+        
+        uploadArea.classList.add('has-image');
+        
+        // Initialize zoom functionality
+        initializeZoomControls();
+        
+        // Apply current filter
+        applyFilter(currentFilter);
+        
+        // Reset zoom and position
+        resetZoom();
+    }
+
+    function initializeZoomControls() {
+        const imageContainer = document.getElementById('imageContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        
+        if (!imageContainer || !imagePreview) return;
+        
+        // Mouse wheel zoom
+        imageContainer.addEventListener('wheel', handleMouseWheel, { passive: false });
+        
+        // Mouse drag for panning when zoomed
+        imageContainer.addEventListener('mousedown', handleMouseDown);
+        imageContainer.addEventListener('mousemove', handleMouseMove);
+        imageContainer.addEventListener('mouseup', handleMouseUp);
+        imageContainer.addEventListener('mouseleave', handleMouseUp);
+        
+        // Touch support for mobile
+        imageContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+        imageContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+        imageContainer.addEventListener('touchend', handleTouchEnd);
+        
+        // Prevent context menu on right click
+        imageContainer.addEventListener('contextmenu', (e) => e.preventDefault());
+        
+        // Update zoom indicator
+        updateZoomIndicator();
+    }
+
+    // Zoom functions
+    function zoomIn() {
+        if (currentZoom < maxZoom) {
+            currentZoom = Math.min(maxZoom, currentZoom + zoomStep);
+            applyZoom();
+        }
+    }
+
+    function zoomOut() {
+        if (currentZoom > minZoom) {
+            currentZoom = Math.max(minZoom, currentZoom - zoomStep);
+            applyZoom();
+        }
+    }
+
+    function resetZoom() {
+        currentZoom = 1;
+        imagePosition = { x: 0, y: 0 };
+        applyZoom();
+    }
+
+    function applyZoom() {
+        const imagePreview = document.getElementById('imagePreview');
+        const imageContainer = document.getElementById('imageContainer');
+        
+        if (!imagePreview || !imageContainer) return;
+        
+        // Apply zoom and position
+        imagePreview.style.transform = `scale(${currentZoom}) translate(${imagePosition.x}px, ${imagePosition.y}px)`;
+        
+        // Update container state
+        if (currentZoom > 1) {
+            imageContainer.classList.add('zoomed');
+        } else {
+            imageContainer.classList.remove('zoomed');
+            imagePosition = { x: 0, y: 0 }; // Reset position when not zoomed
+        }
+        
+        // Update zoom indicator and buttons
+        updateZoomIndicator();
+        updateZoomButtons();
+    }
+
+    function updateZoomIndicator() {
+        const zoomIndicator = document.getElementById('zoomIndicator');
+        if (zoomIndicator) {
+            zoomIndicator.textContent = `${Math.round(currentZoom * 100)}%`;
+        }
+    }
+
+    function updateZoomButtons() {
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        
+        if (zoomInBtn) zoomInBtn.disabled = currentZoom >= maxZoom;
+        if (zoomOutBtn) zoomOutBtn.disabled = currentZoom <= minZoom;
+    }
+
+    // Mouse wheel zoom handler
+    function handleMouseWheel(e) {
+        e.preventDefault();
+        
+        const delta = e.deltaY > 0 ? -zoomStep : zoomStep;
+        const newZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom + delta));
+        
+        if (newZoom !== currentZoom) {
+            currentZoom = newZoom;
+            applyZoom();
+        }
+    }
+
+    // Mouse drag handlers for panning
+    function handleMouseDown(e) {
+        if (currentZoom <= 1) return;
+        
+        isDragging = true;
+        dragStart.x = e.clientX - imagePosition.x;
+        dragStart.y = e.clientY - imagePosition.y;
+        
+        const imageContainer = document.getElementById('imageContainer');
+        if (imageContainer) {
+            imageContainer.style.cursor = 'grabbing';
+        }
+    }
+
+    function handleMouseMove(e) {
+        if (isDragging && currentZoom > 1) {
+            imagePosition.x = e.clientX - dragStart.x;
+            imagePosition.y = e.clientY - dragStart.y;
+            
+            // Limit dragging to reasonable bounds
+            const maxOffset = 100 * currentZoom;
+            imagePosition.x = Math.max(-maxOffset, Math.min(maxOffset, imagePosition.x));
+            imagePosition.y = Math.max(-maxOffset, Math.min(maxOffset, imagePosition.y));
+            
+            applyZoom();
+        }
+    }
+
+    function handleMouseUp() {
+        isDragging = false;
+        const imageContainer = document.getElementById('imageContainer');
+        if (imageContainer) {
+            imageContainer.style.cursor = currentZoom > 1 ? 'move' : 'grab';
+        }
+    }
+
+    // Touch handlers for mobile
+    function handleTouchStart(e) {
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            handleMouseDown({ clientX: touch.clientX, clientY: touch.clientY });
+        }
+    }
+
+    function handleTouchMove(e) {
+        e.preventDefault();
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            handleMouseMove({ clientX: touch.clientX, clientY: touch.clientY });
+        }
+    }
+
+    function handleTouchEnd() {
+        handleMouseUp();
+    }
+
+    function changeImage() {
+        document.getElementById('imageUpload').click();
+    }
+
+    // Keyboard shortcuts for zoom
+    document.addEventListener('keydown', function(e) {
+        if (!currentImage) return;
+        
+        // Only work when image is focused or no input is focused
+        if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+            return;
+        }
+        
+        switch(e.key) {
+            case '+':
+            case '=':
+                e.preventDefault();
+                zoomIn();
+                break;
+            case '-':
+                e.preventDefault();
+                zoomOut();
+                break;
+            case '0':
+                e.preventDefault();
+                resetZoom();
+                break;
+        }
+    });
+
+// ==============================================================================
+// SIMPLE ENHANCED TEXT REPORT GENERATION - FRONTEND
+// ==============================================================================
+
+// Global variable to store generated report
+let generatedReportText = null;
+
+// ==============================================================================
+// MAIN REPORT GENERATION FUNCTION
+// ==============================================================================
+
+async function generateEnhancedReport() {
+    if (!lastPredictionResult) {
+        alert('Please analyze an image first before generating a report.');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        const generateBtn = document.getElementById('generateAIReportBtn') || document.getElementById('generateReportBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        
+        if (generateBtn) {
+            generateBtn.disabled = true;
+            generateBtn.textContent = '⏳ Generating Report...';
+        }
+        
+        // Determine exam type based on current page
+        const examType = getExamTypeFromPage();
+        
+        // Prepare report data
+        const reportData = {
+            patient_info: lastPredictionResult.patient_info || getDefaultPatientInfo(),
+            doctor_info: lastPredictionResult.doctor_info || getDefaultDoctorInfo(),
+            facility_info: lastPredictionResult.facility_info || getDefaultFacilityInfo(),
+            ai_results: prepareAIResults(lastPredictionResult),
+            image_analysis: lastPredictionResult.image_analysis || '',
+            reason_of_visit: document.getElementById('reasonOfVisit')?.value || '',
+            exam_type: examType
+        };
+        
+        console.log('Generating enhanced text report with data:', reportData);
+        
+        // Call backend to generate text report
+        const response = await fetch(`${apiBaseUrl}/generate-text-report`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(reportData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to generate report');
+        }
+        
+        // Store generated report
+        generatedReportText = result.report_text;
+        
+        // Update the textarea with the enhanced report
+        const reportTextarea = document.getElementById('reportText');
+        if (reportTextarea) {
+            reportTextarea.value = result.report_text;
+        }
+        
+        // Enable download button
+        if (downloadBtn) {
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = '📄 Download Enhanced Report';
+            downloadBtn.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+        }
+        
+        // Reset generate button
+        if (generateBtn) {
+            generateBtn.disabled = false;
+            generateBtn.textContent = '✅ Report Generated';
+            generateBtn.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+        }
+        
+        // Show success message
+        showNotification('Enhanced medical report generated successfully!', 'success');
+        
+        console.log('Enhanced text report generated successfully');
+        
+    } catch (error) {
+        console.error('Error generating enhanced report:', error);
+        
+        // Reset buttons
+        const generateBtn = document.getElementById('generateAIReportBtn') || document.getElementById('generateReportBtn');
+        if (generateBtn) {
+            generateBtn.disabled = false;
+            generateBtn.textContent = '🔄 Generate Report';
+            generateBtn.style.background = '';
+        }
+        
+        showNotification(`Report generation failed: ${error.message}`, 'error');
+    }
+}
+
+// ==============================================================================
+// DOWNLOAD FUNCTION
+// ==============================================================================
+
+function populatePdfTemplate(data) {
+    // === PART 1: Populate common fields (this part is correct and remains the same) ===
+    document.getElementById('pdf-facility-name').textContent = data.facility_info.name;
+    document.getElementById('pdf-facility-address').textContent = data.facility_info.address;
+    document.getElementById('pdf-facility-phone').textContent = data.facility_info.phone;
+    document.getElementById('pdf-doctor-department-header').textContent = data.doctor_info.department;
+    document.getElementById('pdf-exam-type-header').textContent = data.exam_type;
+    document.getElementById('pdf-patient-name').textContent = data.patient_info.patient_name;
+    document.getElementById('pdf-exam-type-details').textContent = data.exam_type;
+    document.getElementById('pdf-patient-id').textContent = data.patient_info.patient_id;
+    document.getElementById('pdf-exam-datetime').textContent = data.patient_info.upload_datetime;
+    document.getElementById('pdf-patient-age').textContent = `${data.patient_info.age} years`;
+    document.getElementById('pdf-doctor-name').textContent = data.doctor_info.name;
+    let gender = data.patient_info.gender;
+    document.getElementById('pdf-patient-gender').textContent = (gender === 'M') ? 'Male' : (gender === 'F') ? 'Female' : gender;
+    document.getElementById('pdf-doctor-department-details').textContent = data.doctor_info.department;
+    document.getElementById('pdf-reason-visit').textContent = data.reason_of_visit || 'Routine examination';
+    document.getElementById('pdf-footer-facility-name').textContent = data.facility_info.name;
+
+    // === PART 2: Populate AI Results with detailed table logic ===
+    const resultsContainer = document.getElementById('pdf-ai-results');
+    resultsContainer.innerHTML = ''; // Clear previous results
+
+    switch (data.exam_type) {
+        
+        case 'Chest X-Ray Analysis':
+            if (data.ai_results.class_names && data.ai_results.probabilities) {
+                let table = '<table class="results-table"><thead><tr><th style="width:20px;">Status</th><th>Finding</th><th>Confidence</th></tr></thead><tbody>';
+                data.ai_results.class_names.forEach((name, index) => {
+                    const confidence = (data.ai_results.probabilities[index] * 100).toFixed(1);
+                    const isPredicted = (name === data.ai_results.predicted_class);
+                    const checkbox = isPredicted ? '☑' : '☐';
+                    table += `<tr><td style="text-align:center; font-size:14pt;">${checkbox}</td><td>${name.replace('_', ' ')}</td><td>${confidence}%</td></tr>`;
+                });
+                table += '</tbody></table>';
+                resultsContainer.innerHTML = table;
+            }
+            break;
+
+        case 'Dental X-Ray Analysis':
+            // For Dental, we use a reliable hardcoded list of class names
+            const dentalClasses = ['Cavities', 'Fillings', 'Impacted_Teeth', 'Implants'];
+            if (data.ai_results.probabilities) {
+                let dentalTable = '<table class="results-table"><thead><tr><th style="width:20px;">Status</th><th>Finding</th><th>Confidence</th></tr></thead><tbody>';
+                dentalClasses.forEach((name, index) => {
+                    const confidence = (data.ai_results.probabilities[index] * 100 || 0).toFixed(1);
+                    const isPredicted = (name.replace('_', ' ') === data.ai_results.predicted_class.replace('_', ' '));
+                    const checkbox = isPredicted ? '☑' : '☐';
+                    dentalTable += `<tr><td style="text-align:center; font-size:14pt;">${checkbox}</td><td>${name.replace('_', ' ')}</td><td>${confidence}%</td></tr>`;
+                });
+                dentalTable += '</tbody></table>';
+                resultsContainer.innerHTML = dentalTable;
+            }
+            break;
+
+        case 'Bone Fracture Analysis':
+            // For Fracture, we show the simple two-stage result
+            let content = `<p><strong>Fracture Detection:</strong> ${data.ai_results.stage1_prediction.prediction} (${data.ai_results.stage1_prediction.confidence.toFixed(1)}% confidence)</p>`;
+            if (data.ai_results.stage2_prediction) {
+                content += `<p style="margin-top: 5px;"><strong>Fracture Type:</strong> ${data.ai_results.stage2_prediction.prediction} (${data.ai_results.stage2_prediction.confidence.toFixed(1)}% confidence)</p>`;
+            }
+            resultsContainer.innerHTML = content;
+            break;
+            
+        default:
+            resultsContainer.innerHTML = '<p>Analysis results could not be formatted.</p>';
+    }
+}
+
+
+async function downloadEnhancedReport() {
+    if (!lastPredictionResult) {
+        alert('Please analyze an image first to generate a report.');
+        return;
+    }
+
+    const downloadBtn = document.getElementById('downloadBtn');
+    downloadBtn.disabled = true;
+    downloadBtn.textContent = '⏳ Preparing PDF...';
+
+    try {
+        // Fetch the doctor info and store it directly in a local variable.
+        const doctorInfo = await fetchCurrentDoctorInfo();
+        
+        const reportData = {
+            patient_info: lastPredictionResult.patient_info || getDefaultPatientInfo(),
+            doctor_info: {
+                name:       doctorInfo?.name || 'Unknown Doctor (Not Logged In)',
+                id:         doctorInfo?.id || 'N/A',
+                department: doctorInfo?.department || 'Radiology',
+                title:      doctorInfo?.title || 'Physician'
+            },
+            facility_info: lastPredictionResult.facility_info || getDefaultFacilityInfo(),
+            ai_results: prepareAIResults(lastPredictionResult),
+            exam_type: getExamTypeFromPage(),
+            reason_of_visit: document.getElementById('reasonOfVisit')?.value || ''
+        };
+
+        // Populate the template and generate the PDF.
+        populatePdfTemplate(reportData);
+        
+        const element = document.getElementById('pdf-content');
+        const filename = `Report_${reportData.patient_info.patient_name.replace(' ', '_')}.pdf`;
+        const opt = {
+            margin:       0,
+            filename:     filename,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        await html2pdf().from(element).set(opt).save();
+        
+        showNotification('PDF report downloaded successfully!', 'success');
+
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        showNotification('Failed to generate PDF.', 'error');
+    } finally {
+        downloadBtn.disabled = false;
+        downloadBtn.textContent = '📄 Download Report';
+    }
+}
+
+// ==============================================================================
+// UTILITY FUNCTIONS
+// ==============================================================================
+
+function getExamTypeFromPage() {
+    const currentPath = window.location.pathname;
+    
+    if (currentPath.includes('main') || currentPath.includes('index') || currentPath.includes('chest')) {
+        return 'Chest X-Ray Analysis';
+    } else if (currentPath.includes('bone-fracture') || currentPath.includes('page2')) {
+        return 'Bone Fracture Analysis';
+    } else if (currentPath.includes('dental') || currentPath.includes('page3')) {
+        return 'Dental X-Ray Analysis';
+    }
+    
+    return 'Medical Imaging Analysis';
+}
+
+function prepareAIResults(predictionResult) {
+    // Handle different prediction result formats
+    if (predictionResult.predicted_class) {
+        // Single prediction format (chest, dental)
+        return {
+            predicted_class: predictionResult.predicted_class,
+            confidence: predictionResult.confidence,
+            probabilities: predictionResult.probabilities || [],
+            class_names: predictionResult.class_names || [],
+            detection_details: predictionResult.detection_details || null
+        };
+    } else if (predictionResult.stage1_prediction) {
+        // Two-stage prediction format (fracture)
+        return {
+            stage1_prediction: predictionResult.stage1_prediction,
+            stage2_prediction: predictionResult.stage2_prediction || null
+        };
+    }
+    
+    return predictionResult;
+}
+
+function getDefaultPatientInfo() {
+    return {
+        patient_name: 'Unknown Patient',
+        patient_id: 'N/A',
+        age: 'Unknown',
+        gender: 'Unknown',
+        upload_datetime: new Date().toLocaleString(),
+        upload_date: new Date().toLocaleDateString(),
+        upload_time: new Date().toLocaleTimeString()
+    };
+}
+
+function getDefaultDoctorInfo() {
+    return {
+        name: 'Unknown Doctor',
+        id: 'N/A',
+        department: 'Radiology',
+        title: 'Physician'
+    };
+}
+
+function getDefaultFacilityInfo() {
+    return {
+        name: 'Medical Imaging Center',
+        address: 'Medical Center',
+        phone: 'N/A'
+    };
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        z-index: 10000;
+        max-width: 400px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        animation: slideIn 0.3s ease;
+    `;
+    
+    // Set colors based on type
+    switch (type) {
+        case 'success':
+            notification.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+            break;
+        case 'error':
+            notification.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+            break;
+        default:
+            notification.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+    }
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 4000);
+}
+
+// ==============================================================================
+// BUTTON INTEGRATION AND PAGE UPDATES
+// ==============================================================================
+
+function updateReportButtons() {
+    const downloadBtn = document.getElementById('downloadBtn');
+    if (downloadBtn) {
+
+        const newDownloadBtn = downloadBtn.cloneNode(true);
+        downloadBtn.parentNode.replaceChild(newDownloadBtn, downloadBtn);
+        
+        newDownloadBtn.onclick = downloadEnhancedReport;
+        newDownloadBtn.title = 'Download enhanced medical report';
+    }
+    
+    let generateBtn = document.getElementById('generateAIReportBtn');
+    if (!generateBtn) {
+        generateBtn = document.getElementById('generateReportBtn');
+    }
+    
+    if (generateBtn) {
+        generateBtn.onclick = generateEnhancedReport;
+        generateBtn.disabled = false;
+        generateBtn.textContent = '🔄 Generate Enhanced Report';
+        generateBtn.title = 'Generate professional medical report';
+    }
+}
+
+// ==============================================================================
+// AUTO-ENABLE AFTER ANALYSIS
+// ==============================================================================
+
+function enableReportGeneration() {
+    const generateBtn = document.getElementById('generateAIReportBtn') || document.getElementById('generateReportBtn');
+    if (generateBtn) {
+        generateBtn.disabled = false;
+        generateBtn.style.opacity = '1';
+    }
+}
+
+// ==============================================================================
+// INTEGRATION WITH EXISTING FUNCTIONS
+// ==============================================================================
+
+function downloadReport() {
+    console.log('Legacy downloadReport called - using enhanced version');
+    downloadEnhancedReport();
+}
+
+function generateAIReport() {
+    console.log('Legacy generateAIReport called - using enhanced version');
+    generateEnhancedReport();
+}
+
+// ==============================================================================
+// INITIALIZATION
+// ==============================================================================
+
+// Add CSS for animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait a bit for existing code to initialize
+    setTimeout(() => {
+        updateReportButtons();
+        console.log('Enhanced text report system initialized');
+    }, 1000);
+});
+
+// ==============================================================================
+// LOGIN INFORMATION INTEGRATION FOR ENHANCED REPORTS
+// ==============================================================================
+
+// Global variable to store current logged-in doctor info
+let currentLoggedInDoctor = null;
+
+// ==============================================================================
+// FETCH CURRENT LOGIN STATUS AND DOCTOR INFO
+// ==============================================================================
+
+async function fetchCurrentDoctorInfo() {
+    try {
+        const response = await fetch(`${apiBaseUrl}/api/login-status`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.logged_in && data.doctor) {
+                currentLoggedInDoctor = data.doctor; // Set global for other UI elements
+                return data.doctor; // **Return the doctor object**
+            }
+        }
+        currentLoggedInDoctor = null;
+        return null; // Return null if not logged in or on failure
+    } catch (error) {
+        console.error('Error fetching login status:', error);
+        currentLoggedInDoctor = null;
+        return null; // Return null on error
+    }
+}
+
+// ==============================================================================
+// UPDATE DOCTOR INFO FUNCTIONS
+// ==============================================================================
+
+function getDefaultDoctorInfo() {
+    // Use logged-in doctor info if available, otherwise use defaults
+    if (currentLoggedInDoctor) {
+        return {
+            name: currentLoggedInDoctor.name || 'Unknown Doctor',
+            id: currentLoggedInDoctor.id || 'N/A',
+            department: currentLoggedInDoctor.department || 'Radiology',
+            title: currentLoggedInDoctor.title || 'Physician'
+        };
+    }
+    
+    // Fallback to defaults if no login info
+    return {
+        name: 'Unknown Doctor (Not Logged In)',
+        id: 'N/A',
+        department: 'Radiology',
+        title: 'Physician'
+    };
+}
+
+function updateDoctorInfoDisplay() {
+    // Update any UI elements that show doctor info
+    const doctorDisplayElements = document.querySelectorAll('[data-doctor-info]');
+    
+    doctorDisplayElements.forEach(element => {
+        const infoType = element.getAttribute('data-doctor-info');
+        
+        if (currentLoggedInDoctor) {
+            switch (infoType) {
+                case 'name':
+                    element.textContent = currentLoggedInDoctor.name;
+                    break;
+                case 'department':
+                    element.textContent = currentLoggedInDoctor.department;
+                    break;
+                case 'title':
+                    element.textContent = currentLoggedInDoctor.title;
+                    break;
+                case 'id':
+                    element.textContent = currentLoggedInDoctor.id;
+                    break;
+            }
+        }
+    });
+    
+    // Update header subtitle to show logged-in doctor
+    const headerSubtitle = document.querySelector('.header .subtitle');
+    if (headerSubtitle && currentLoggedInDoctor) {
+        const statusElement = headerSubtitle.querySelector('#apiStatusText');
+        if (statusElement) {
+            const originalText = statusElement.textContent;
+            statusElement.innerHTML = `${originalText} | Dr: ${currentLoggedInDoctor.name}`;
+        }
+    }
+}
+
+// ==============================================================================
+// ENHANCED REPORT GENERATION WITH LOGIN INFO
+// ==============================================================================
+
+async function generateEnhancedReport() {
+    if (!lastPredictionResult) {
+        alert('Please analyze an image first before generating a report.');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        const generateBtn = document.getElementById('generateAIReportBtn') || document.getElementById('generateReportBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        
+        if (generateBtn) {
+            generateBtn.disabled = true;
+            generateBtn.textContent = '⏳ Generating Report...';
+        }
+        
+        // Fetch current login info before generating report
+        await fetchCurrentDoctorInfo();
+        
+        // Determine exam type based on current page
+        const examType = getExamTypeFromPage();
+        
+        // Prepare report data with login info
+        const reportData = {
+            patient_info: lastPredictionResult.patient_info || getDefaultPatientInfo(),
+            doctor_info: getDefaultDoctorInfo(), // This now uses login info
+            facility_info: lastPredictionResult.facility_info || getDefaultFacilityInfo(),
+            ai_results: prepareAIResults(lastPredictionResult),
+            image_analysis: lastPredictionResult.image_analysis || '',
+            reason_of_visit: document.getElementById('reasonOfVisit')?.value || '',
+            exam_type: examType
+        };
+        
+        console.log('Generating enhanced text report with login info:', reportData);
+        
+        // Call backend to generate text report
+        const response = await fetch(`${apiBaseUrl}/generate-text-report`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(reportData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to generate report');
+        }
+        
+        // Store generated report
+        generatedReportText = result.report_text;
+        
+        // Update the textarea with the enhanced report
+        const reportTextarea = document.getElementById('reportText');
+        if (reportTextarea) {
+            reportTextarea.value = result.report_text;
+        }
+        
+        // Enable download button
+        if (downloadBtn) {
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = '📄 Download Enhanced Report';
+            downloadBtn.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+        }
+        
+        // Reset generate button
+        if (generateBtn) {
+            generateBtn.disabled = false;
+            generateBtn.textContent = '✅ Report Generated';
+            generateBtn.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+        }
+        
+        // Show success message with doctor info
+        const doctorName = currentLoggedInDoctor ? currentLoggedInDoctor.name : 'Unknown Doctor';
+        showNotification(`Enhanced medical report generated by ${doctorName}!`, 'success');
+        
+        console.log('Enhanced text report generated successfully with doctor info');
+        
+    } catch (error) {
+        console.error('Error generating enhanced report:', error);
+        
+        // Reset buttons
+        const generateBtn = document.getElementById('generateAIReportBtn') || document.getElementById('generateReportBtn');
+        if (generateBtn) {
+            generateBtn.disabled = false;
+            generateBtn.textContent = '🔄 Generate Report';
+            generateBtn.style.background = '';
+        }
+        
+        showNotification(`Report generation failed: ${error.message}`, 'error');
+    }
+}
+
+// ==============================================================================
+// INITIALIZE LOGIN INFO ON PAGE LOAD
+// ==============================================================================
+
+async function initializeLoginInfo() {
+    console.log('Initializing login information...');
+    
+    // Fetch current login status
+    await fetchCurrentDoctorInfo();
+    
+    // Update any UI elements
+    updateDoctorInfoDisplay();
+    
+    console.log('Login information initialized:', currentLoggedInDoctor);
+}
+
+// ==============================================================================
+// AUTO-INITIALIZATION
+// ==============================================================================
+
+// Initialize login info when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait a bit for existing code to initialize
+    setTimeout(() => {
+        initializeLoginInfo();
+        updateReportButtons();
+        console.log('Enhanced text report system with login integration loaded');
+    }, 1500); // Increased delay to ensure other systems load first
+});
+
+// ==============================================================================
+// OPTIONAL: ADD DOCTOR INFO TO UI
+// ==============================================================================
+
+function addDoctorInfoToUI() {
+    // Find a good place to show current doctor info
+    const headerContent = document.querySelector('.header-content');
+    
+    if (headerContent && currentLoggedInDoctor && !document.getElementById('doctorInfoDisplay')) {
+        const doctorInfoDiv = document.createElement('div');
+        doctorInfoDiv.id = 'doctorInfoDisplay';
+        doctorInfoDiv.style.cssText = `
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #00d4ff;
+            margin-top: 10px;
+        `;
+        
+        doctorInfoDiv.innerHTML = `
+            <strong>👨‍⚕️ Logged in:</strong> ${currentLoggedInDoctor.name}<br>
+            <strong>🏥 Department:</strong> ${currentLoggedInDoctor.department}
+        `;
+        
+        headerContent.appendChild(doctorInfoDiv);
+    }
+}
+
+// ==============================================================================
+// DEBUGGING FUNCTIONS
+// ==============================================================================
+
+function checkLoginStatus() {
+    console.log('=== LOGIN STATUS DEBUG ===');
+    console.log('Current logged-in doctor:', currentLoggedInDoctor);
+    
+    // Test the API endpoint
+    fetchCurrentDoctorInfo().then(doctor => {
+        console.log('Fresh login status fetch:', doctor);
+    });
+}
+
+// Expose for debugging
+window.checkLoginStatus = checkLoginStatus;
+window.getCurrentDoctor = () => currentLoggedInDoctor;
+
+console.log('Login integration for enhanced reports loaded');
+
+window.enableEnhancedReporting = enableReportGeneration;
+
+console.log('Enhanced text report generation system loaded');
+
+
 </script>
+<div id="pdf-report-container" style="display: none; width: 210mm;">
+    <div id="pdf-content">
+        <style>
+            #pdf-content * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+            /* Main container is now more compact */
+            #pdf-content { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 9pt; color: #333; padding: 10mm; }
+            
+            /* Reduced header size and spacing */
+            #pdf-content .header { text-align: center; border-bottom: 2px solid #007bff; padding-bottom: 5px; background-color: #ffffff;}
+            #pdf-content .header h1 { color: #007bff; margin: 0; font-size: 22pt; font-weight: bold; }
+            #pdf-content .header .facility-info { font-size: 8pt; color: #555; }
+            
+            /* Reduced title size and spacing */
+            #pdf-content .report-title { text-align: center; margin: 10px 0; background-color: #007bff; color: white; padding: 8px; font-size: 13pt; font-weight: bold; }
+            
+            /* Reduced space between sections */
+            #pdf-content .section { border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; }
+            #pdf-content .section-title { background-color: #007bff; color: white; padding: 6px 12px; border-radius: 4px 4px 0 0; font-size: 11pt; font-weight: bold; }
+            #pdf-content .section-content { padding: 10px; line-height: 1.4; }
+            
+            /* Reduced padding in tables */
+            #pdf-content .details-table { width: 100%; border-collapse: collapse; }
+            #pdf-content .details-table td { padding: 5px; width: 50%; vertical-align: top; }
+            #pdf-content .details-table td:nth-child(odd) { font-weight: bold; }
+            
+            #pdf-content .results-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+            #pdf-content .results-table th { background-color: #f2f2f2; }
+            #pdf-content .results-table td, #pdf-content .results-table th { border: 1px solid #ddd; padding: 6px; text-align: left; }
+            
+            /* Reduced footer size */
+            #pdf-content .footer { font-size: 7pt; color: #777; text-align: center; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 5px; }
+            .html2pdf__page-break { display: none; } /* Ensure no manual page breaks are attempted */
+        </style>
+
+        <div class="header">
+            <h1>H+ <span id="pdf-facility-name"></span></h1>
+            <div class="facility-info">
+                <span id="pdf-facility-address"></span> | Tel: <span id="pdf-facility-phone"></span><br>
+                <strong>Department: <span id="pdf-doctor-department-header"></span></strong>
+            </div>
+        </div>
+
+        <div class="report-title">
+            MEDICAL IMAGING REPORT: <span id="pdf-exam-type-header"></span>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Patient & Examination Details</div>
+            <div class="section-content">
+                <table class="details-table">
+                    <tr><td>Patient Name:</td> <td><span id="pdf-patient-name"></span></td></tr>
+                    <tr><td>Patient ID:</td> <td><span id="pdf-patient-id"></span></td></tr>
+                    <tr><td>Age:</td> <td><span id="pdf-patient-age"></span></td></tr>
+                    <tr><td>Gender:</td> <td><span id="pdf-patient-gender"></span></td></tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="section">
+             <div class="section-title">Examination Details</div>
+             <div class="section-content">
+                <table class="details-table">
+                    <tr><td>Exam Type:</td> <td><span id="pdf-exam-type-details"></span></td></tr>
+                    <tr><td>Date & Time:</td> <td><span id="pdf-exam-datetime"></span></td></tr>
+                    <tr><td>Referring Physician:</td> <td><span id="pdf-doctor-name"></span></td></tr>
+                    <tr><td>Department:</td> <td><span id="pdf-doctor-department-details"></span></td></tr>
+                    <tr><td>Reason for Visit:</td> <td><span id="pdf-reason-visit"></span></td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">AI Analysis Results</div>
+            <div id="pdf-ai-results" class="section-content">
+                </div>
+        </div>
+
+        <div class="footer">
+            <strong><span id="pdf-footer-facility-name"></span></strong><br>
+            Website: www.hospital.com | Email: info@hospital.com<br>
+            <p><strong>DISCLAIMER:</strong> This report contains AI-assisted analysis results. All findings should be verified by a qualified radiologist before making clinical decisions. This AI analysis is for diagnostic assistance only and should not replace professional medical judgment.</p>
+        </div>
+    </div>
+</div>
+</div>
 </body>
 </html>
