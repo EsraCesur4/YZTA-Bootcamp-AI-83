@@ -19,9 +19,17 @@
 
 ---
 
-### Ürün Linki: [MedScan AI](https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench) : https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench  
-![HuggingFace Spaces](https://img.shields.io/badge/Deployed-HuggingFace-blue?style=flat-square&logo=huggingface)
-![Status](https://img.shields.io/badge/Status-Online%20-brightgreen?style=flat-square)
+## Ürün Linki:
+
+🔗 **Tıklanabilir bağlantı:**  
+[MedScan AI - Hugging Face Spaces](https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench)
+
+📎 **Fiziksel bağlantı:**  
+`https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench`
+
+
+[![HuggingFace Spaces](https://img.shields.io/badge/Deployed-HuggingFace-blue?style=flat-square&logo=huggingface)](https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench)
+[![Status](https://img.shields.io/badge/Status-Online-brightgreen?style=flat-square)](https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench)
 
 ---
 
