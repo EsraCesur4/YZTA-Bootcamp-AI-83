@@ -223,6 +223,56 @@ Günlük scrum toplantılarımız **WhatsApp grubu üzerinden yazılı olarak** 
 - Görselleştirme çıktıları, model doğruluğuyla tutarlı şekilde başarılı sonuçlar verdi.  
 - Bir sonraki sprintte sistem entegrasyonu ve demo yayınına ağırlık verilecek.
 
+---
+
+## Sprint 3 Notları
+
+Sprint 3 kapsamında sistemin kapsamı genişletilerek sadece göğüs röntgeni değil, **diş** ve **kemik** gibi farklı anatomik bölgeler için de analiz yapılabilecek şekilde altyapı güncellenmiştir.  
+Ayrıca, uygulamanın erişilebilirliğini artırmak amacıyla bir **canlı demo Hugging Face üzerinde** yayınlanmıştır.
+Frontend'de kullanıcı deneyimini iyileştiren tasarım değişiklikleri yapılmış, raporlama çıktıları daha kullanıcı dostu hale getirilmiştir.
+
+## 🗣 Daily Scrum
+
+Günlük scrum toplantılarımız yine **WhatsApp grubu üzerinden yazılı olarak** gerçekleştirilmiştir.
+
+## Ürün Durumu (Ekran Görüntüleri)
+
+📍 **Goz Hastaliklari Siniflandirma Sonucu:**  
+![Live_UI_Anatomy](Documentation/image/ocular_disease.png)
+
+📍 **Diş Görüntüsü Sınıflandırma Sonucu:**  
+![Dental_Detection](Documentation/image/dental_xray.png)
+
+📍 **Kemik Anomali Görselleştirmesi:**  
+![Bone_Detection](Documentation/image/bone_fracture.png)
+
+📍 **Canlı Demo Hugging Face:**  
+Uygulama, daha geniş kullanıcı kitlesinin test edebilmesi amacıyla Hugging Face üzerinde canlıya alınmıştır:  
+🔗 [https://huggingface.co/spaces/YOUR_TEAM/YOUR_PROJECT](https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench)
 
 
 
+## 🚀 Uygulama Kullanımı ve Yayın Ortamı
+
+Proje, gerçek kullanıcı deneyimini iyileştirmek ve kullanımı daha pratik hale getirmek amacıyla, gerçek hayatta birebir karşılığı olmayan "kart numarası" ve "hastane ID" gibi giriş alanları sistemden kaldırılarak sadeleştirilmiştir.  
+Bu sadeleştirme sayesinde kullanıcıların sistemi keşfetmesi, test etmesi ve öğrenmesi kolaylaştırılmıştır. Modelin yuklenmesi basarisiz olmasi durumunda gemini ai ile model analiz edilip, sistemi korumaya alinmistir.
+
+Uygulama halen geliştirilmeye devam etmekte olup; eksik yönleri giderilerek işlevselliği artırılacaktır.
+
+🔗 **Canlı Uygulama Adresi:**  
+[http://34.78.167.90:8000](http://34.78.167.90:8000)
+
+🔐 **Test Hesapları:**
+
+| Rol    | TC Kimlik No   | Şifre      |
+|--------|----------------|------------|
+| Admin  | 12345678901    | admin123   |
+| Doktor | 98765432109    | doctor123  |
+
+📍 **Canlı Demo (Development)**  
+
+ **Giris Sekmesi**
+![Dental_Detection](Documentation/image/light_login.png)
+
+ **Gogus xray goruntuleme ve raporlama**  
+![Bone_Detection](Documentation/image/light_dashboard.png)
