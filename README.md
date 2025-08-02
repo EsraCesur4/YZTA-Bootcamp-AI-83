@@ -311,11 +311,19 @@ Günlük scrum toplantılarımız yine **WhatsApp grubu üzerinden yazılı olar
 
 ## Ürün Durumu (Ekran Görüntüleri)
 ---
+📍 **Giriş Arayüzü Ekranları**
+
+| Login Sayfası | Request Access | Forgot Password |
+|------------------|------------------|--------------------|
+| <img src="Documentation/predicted/login.png" width="300"/> | <img src="Documentation/predicted/request_access.png" width="300"/> | <img src="Documentation/predicted/forgot_password.png" width="300"/> |
+
+---
+
 📍 **Göğüs X-Ray Sınıflandırma Sonucu:**
 
 | Tahmin Öncesi | Tahmin Sonrası |
 |----------------------|---------------------|
-| <img src="https://github.com/user-attachments/assets/bf5cc43d-7dd8-4f41-8c89-659de94bed1a" width="400"/> | <img src="Documentation/predicted/chest.png" width="400"/> |
+| <img src="https://github.com/user-attachments/assets/bf5cc43d-7dd8-4f41-8c89-659de94bed1a" width="460"/> | <img src="Documentation/predicted/chest.png" width="460"/> |
 
 
 ---
@@ -323,19 +331,21 @@ Günlük scrum toplantılarımız yine **WhatsApp grubu üzerinden yazılı olar
 📍 **Goz Hastaliklari Siniflandirma Sonucu:**  
 | Tahmin Öncesi | Tahmin Sonrası |
 |----------------------|---------------------|
-| <img src="Documentation/image/ocular_disease.png" width="400"/> | <img src="Documentation/predicted/ocular.png" width="400"/> |
+| <img src="Documentation/image/ocular_disease.png" width="460"/> | <img src="Documentation/predicted/ocular.png" width="460"/> |
 
+---
 
 📍 **Diş Görüntüsü Anomali Görselleştirmesi:**  
 | Tahmin Öncesi | Tahmin Sonrası |
 |----------------------|---------------------|
-| <img src="Documentation/image/dental_xray.png" width="400"/> | <img src="Documentation/predicted/dental.png" width="400"/> |
+| <img src="Documentation/image/dental_xray.png" width="460"/> | <img src="Documentation/predicted/dental.png" width="460"/> |
 
+---
 
 📍 **Kemik Sınıflandırma Sonucu:**  
 | Tahmin Öncesi | Tahmin Sonrası |
 |----------------------|---------------------|
-| <img src="Documentation/image/bone_fracture.png" width="400"/> | <img src="Documentation/predicted/bone_fracture.png" width="400"/> |
+| <img src="Documentation/image/bone_fracture.png" width="460"/> | <img src="Documentation/predicted/bone_fracture.png" width="460"/> |
 
 📍 **Canlı Demo Hugging Face:**  
 Uygulama, daha geniş kullanıcı kitlesinin test edebilmesi amacıyla Hugging Face üzerinde canlıya alınmıştır:  
