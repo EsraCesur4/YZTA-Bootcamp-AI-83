@@ -93,7 +93,6 @@ Modelin tespit ettiği bulgular otomatik olarak raporlanacak ve manuel raporlama
 
 - **Otomatik Rapor Üretimi**: Tıbbi analiz sonrası otomatik metin oluşturma
 - **Zoom & Pan**: `0.5x` – `3x` görsellerde yakınlaştırma ve kaydırma desteği
-- **Drag & Drop Upload**: Görüntü yüklemeyi kolaylaştıran sistem
 - **Responsive Design**: Mobil ve masaüstü uyumlu arayüz
 - **Login**: Doktor girişi ve oturum yönetimi
 - **PDF Export**: Otomatik raporların PDF formatında dışa aktarımı
