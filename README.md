@@ -326,13 +326,13 @@ Günlük scrum toplantılarımız yine **WhatsApp grubu üzerinden yazılı olar
 | <img src="Documentation/image/ocular_disease.png" width="400"/> | <img src="Documentation/predicted/ocular.png" width="400"/> |
 
 
-📍 **Diş Görüntüsü Sınıflandırma Sonucu:**  
+📍 **Diş Görüntüsü Anomali Görselleştirmesi:**  
 | Tahmin Öncesi | Tahmin Sonrası |
 |----------------------|---------------------|
 | <img src="Documentation/image/dental_xray.png" width="400"/> | <img src="Documentation/predicted/dental.png" width="400"/> |
 
 
-📍 **Kemik Anomali Görselleştirmesi:**  
+📍 **Kemik Sınıflandırma Sonucu:**  
 | Tahmin Öncesi | Tahmin Sonrası |
 |----------------------|---------------------|
 | <img src="Documentation/image/bone_fracture.png" width="400"/> | <img src="Documentation/predicted/bone_fracture.png" width="400"/> |
