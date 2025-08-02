@@ -19,7 +19,9 @@
 
 ---
 
-### Ürün Linki: [MedScan AI](https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench) : https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench
+### Ürün Linki: [MedScan AI](https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench) : https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench  
+![HuggingFace Spaces](https://img.shields.io/badge/Deployed-HuggingFace-blue?style=flat-square&logo=huggingface)
+![Status](https://img.shields.io/badge/Status-Online%20-brightgreen?style=flat-square)
 
 ---
 
@@ -347,11 +349,26 @@ Günlük scrum toplantılarımız yine **WhatsApp grubu üzerinden yazılı olar
 |----------------------|---------------------|
 | <img src="Documentation/image/bone_fracture.png" width="460"/> | <img src="Documentation/predicted/bone_fracture.png" width="460"/> |
 
-📍 **Canlı Demo Hugging Face:**  
-Uygulama, daha geniş kullanıcı kitlesinin test edebilmesi amacıyla Hugging Face üzerinde canlıya alınmıştır:  
-🔗 [https://huggingface.co/spaces/YOUR_TEAM/YOUR_PROJECT](https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench)
+---
+
+📍 **Otomatik Rapor Oluşturma Çıktıları:**  
+| Göğüs Sınıflandırma Raporu | Kemik Sınıflandırma Raporu | Göz Sınıflandırma Raporu | Diş Anomali Raporu |
+|------------------------------|-------------------------------|------------------------------|------------------------|
+| <img src="Documentation/predicted/chest_report.png" width="250"/> | <img src="Documentation/predicted/bone_fracture_report.png" width="250"/> | <img src="Documentation/predicted/ocular_report.png" width="250"/> | <img src="Documentation/predicted/dental_report.png" width="250"/> |
 
 
+---
+
+### Canlı Uygulama: Hugging Face Spaces    
+
+![HuggingFace Spaces](https://img.shields.io/badge/Deployed-HuggingFace-blue?style=flat-square&logo=huggingface)
+![Status](https://img.shields.io/badge/Status-Online%20-brightgreen?style=flat-square)
+
+Uygulama, daha geniş kullanıcı kitlesinin test edebilmesi amacıyla Hugging Face üzerinde canlıya alınmıştır. Hugging Face Spaces üzerinde tüm özellikleriyle yayınlanmıştır ve herkese açıktır.    
+
+🔗 Website Linki: [MedScan AI - Hugging Face Spaces](https://huggingface.co/spaces/esracesur/Radiology-Ai-Workbench)   
+
+--- 
 
 ## 🚀 Uygulama Kullanımı ve Yayın Ortamı
 
@@ -370,13 +387,11 @@ Uygulama halen geliştirilmeye devam etmekte olup; eksik yönleri giderilerek i�
 | Admin  | 12345678901    | admin123   |
 | Doktor | 98765432109    | doctor123  |
 
-📍 **Canlı Demo (Development)**  
+📍 **Canlı Demo (in Development)**  
 
- **Giris Sekmesi**
-![Dental_Detection](Documentation/image/light_login.png)
-
- **Gogus xray goruntuleme ve raporlama**  
-![Bone_Detection](Documentation/image/light_dashboard.png)
+|  Giriş Sekmesi | Göğüs X-Ray Görüntüleme ve Raporlama |
+|------------------|-----------------------------------------|
+| <img src="Documentation/image/light_login.png" width="460"/> | <img src="Documentation/image/light_dashboard.png" width="460"/> |
 
 </details>
 
