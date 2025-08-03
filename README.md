@@ -483,7 +483,7 @@ Uygulama halen geliştirilmeye devam etmekte olup; eksik yönleri giderilerek i�
 
 </details>
 
-# Proje Dökümanı
+---
 
 <details>
   <summary><h2>Kullanılan Teknolojiler</h2></summary>
