@@ -486,6 +486,18 @@ Uygulama halen geliştirilmeye devam etmekte olup; eksik yönleri giderilerek i�
 ---
 
 <details>
+  <summary><h2>Uygulama Tanıtım Videosu</h2></summary>
+  
+Tıklayarak YouTube üzerinden uygulamayı detaylıca izleyebilirsiniz. 
+<p align="left">
+  <a href="https://www.youtube.com/watch?v=mKVDSoTuPUA" target="_blank">
+    <img src="https://img.youtube.com/vi/mKVDSoTuPUA/maxresdefault.jpg" width="600">
+  </a>
+</p>
+
+</details>
+
+<details>
   <summary><h2>Kullanılan Teknolojiler</h2></summary>
 
 ### Backend
