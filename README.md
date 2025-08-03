@@ -308,17 +308,37 @@ Günlük scrum toplantılarımız **WhatsApp grubu üzerinden yazılı olarak** 
 <details>
   <summary><h2>Sprint 3</h2></summary>
 
+## Sprint Notları
 
-Sprint 3 kapsamında sistemin kapsamı genişletilerek sadece göğüs röntgeni değil, **diş** ve **kemik** gibi farklı anatomik bölgeler için de analiz yapılabilecek şekilde altyapı güncellenmiştir.  
-Ayrıca, uygulamanın erişilebilirliğini artırmak amacıyla bir **canlı demo Hugging Face üzerinde** yayınlanmıştır.
-Frontend'de kullanıcı deneyimini iyileştiren tasarım değişiklikleri yapılmış, raporlama çıktıları daha kullanıcı dostu hale getirilmiştir.
+Sprint 3’te, sistemin tamamı entegre edilerek **canlıya alınmıştır**. Model çeşitliliği artırılmış, kullanıcı arayüzü zenginleştirilmiş, LLM destekli teşhis ve raporlama sistemi tamamlanmıştır. Proje son haline ulaşmış ve Hugging Face Spaces platformu üzerinde yayınlanmıştır.
 
-## 🗣 Daily Scrum
+---
+## Sprint Puanları
+
+- **Toplam Backlog Puanı:** 340 puan  
+- **Sprint 3 Hedefi:** 120 puan
+
+**Sprint 3 içeriği:**
+- Entegre sistem  
+- LLM destekli öneri ve teşhis  
+- Web arayüzü ve kullanıcı deneyimi  
+- Docker paketleme & canlı demo
+
+---
+##  Daily Scrum
 
 Günlük scrum toplantılarımız yine **WhatsApp grubu üzerinden yazılı olarak** gerçekleştirilmiştir.
+ **Günlük konuşma kayıtları:**  
+📄 [daily3.pdf](Documentation/daily3.pdf)
+---
+
+## 📋 Sprint Board
+![Sprint Board](Documentation/trello3.png)
+---
 
 ## Ürün Durumu (Ekran Görüntüleri)
 ---
+
 📍 **Giriş Arayüzü Ekranları**
 
 | Login Sayfası | Request Access | Forgot Password |
@@ -364,6 +384,68 @@ Günlük scrum toplantılarımız yine **WhatsApp grubu üzerinden yazılı olar
 
 
 ---
+
+## Sprint Review
+
+### Model Geliştirme ve Entegrasyon
+
+- Önceki sprintteki **14-class model**, doğruluk düşüklüğü sebebiyle **4-class CNN modeli** ile değiştirildi.
+- **Kemik kırığı tespiti** iki aşamalı hale getirildi:
+  1. Kırık / Kırık Değil tespiti (CNN)
+  2. Kırık ise **10-class kırık türü sınıflandırması**
+- Göz (fundus) görselleri için **5-class EfficientNetB3 modeli** eklendi.
+- Diş X-ray görüntülerinde **4-class YOLO** ile anomali tespiti ve bounding box görselleştirmesi entegre edildi.
+
+### Web Uygulaması ve UX Geliştirmeleri
+
+- Her model için özel **HTML sayfaları** hazırlandı.
+- Kullanıcı deneyimini iyileştirmek için:
+  - **Zoom in/out**
+  - **Model sayfaları arası gezinti (Navbar)**
+  - **Logout**
+  - **Mobil uyum** destekleri eklendi.
+- Görsel filtreleme araçları entegre edildi:
+  - **X-Ray:** Negative, Green Channel, CLAHE  
+  - **Fundus:** Damar belirginleştirici efektler
+
+### LLM Entegrasyonu ve Akıllı Raporlama
+
+- **Gemini 1.5 LLM** entegrasyonu ile:
+  - Alternatif teşhis
+  - Tedavi önerileri
+  - Hasta yönlendirmeleri sağlandı.
+- Kullanıcılar için **Sık Sorulan Sorular butonları** entegre edildi.
+- Her model çıktısı sonrası **otomatik PDF raporu** oluşturulması sağlandı.
+
+### Kullanıcı Yönetimi
+
+- Kullanıcı giriş sayfası aktif hale getirildi.
+- Demo giriş butonları eklendi.
+- “Request Access” ve “Forgot Password” sayfaları yönlendirmeleriyle birlikte tamamlandı.
+
+### Canlı Yayın ve Dağıtım
+
+- Docker dosyası hazırlanarak sistem paketlendi.
+- Uygulama, **Hugging Face Spaces** platformunda yayına alındı.  
+
+---
+
+**Sprint Review Katılımcıları:**
+- Esra Cesur  
+- İclal Karahisar  
+- Atakan Emir Çaldağ  
+- Emir Can İpsalalı
+
+---
+
+## Sprint Retrospective
+
+- Üç sprint sonunda sistem MVP seviyesini geçmiş ve kullanılabilir, entegre bir platform haline gelmiştir.  
+- LLM entegrasyonu ve çoklu model desteği sayesinde sistem klinik karar destek aracı olarak işlevsel hale gelmiştir.  
+- Ekip içi iş birliği, görev dağılımı ve iletişim süreçleri başarıyla yürütülmüştür.  
+- Tüm ekip video sunumunu izledi ve birbirini tebrik ederek süreci tamamladı.
+
+  
 
 ### Canlı Uygulama: Hugging Face Spaces    
 
